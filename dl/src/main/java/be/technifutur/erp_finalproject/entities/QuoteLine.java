@@ -30,4 +30,14 @@ public class QuoteLine {
     @Column(nullable = false)
     @Setter
     private Double totalLinePrice;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ToString.Exclude
+    @Setter
+    private Product product;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ToString.Exclude
+    @Setter
+    private Quote quote;
 }

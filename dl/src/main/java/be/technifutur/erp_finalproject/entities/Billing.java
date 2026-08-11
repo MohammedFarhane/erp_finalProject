@@ -3,9 +3,9 @@ package be.technifutur.erp_finalproject.entities;
 import be.technifutur.erp_finalproject.enums.BillingState;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.ColumnDefault;
 
-import java.util.Date;
+import java.time.LocalDate;
+
 
 @Entity
 @NoArgsConstructor
@@ -21,11 +21,10 @@ public class Billing {
 
     @Column(nullable = false)
     @Setter
-    private Date billingDate;
+    private LocalDate billingDate;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    @ColumnDefault("'BROUILLON'")
     @Setter
     private BillingState state;
 
@@ -44,4 +43,14 @@ public class Billing {
     @Column(nullable = false)
     @Setter
     private Double totalPrice;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ToString.Exclude
+    @Setter
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ToString.Exclude
+    @Setter
+    private Client client;
 }

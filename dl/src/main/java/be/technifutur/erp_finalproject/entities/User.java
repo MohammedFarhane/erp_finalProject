@@ -3,7 +3,9 @@ package be.technifutur.erp_finalproject.entities;
 import be.technifutur.erp_finalproject.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.ColumnDefault;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "user_")
@@ -18,7 +20,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 100)
+    @Column(nullable = false, length = 100)
     @Setter
     private String name;
 
@@ -32,7 +34,16 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    @ColumnDefault("'EMPLOYEE'")
     @Setter
     private UserRole role;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "user_client",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "client_id")
+    )
+    @ToString.Exclude
+    @Setter
+    private Set<Client> clients = new HashSet<>();
 }

@@ -4,7 +4,7 @@ import be.technifutur.erp_finalproject.enums.MovementType;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Entity
 @NoArgsConstructor
@@ -29,5 +29,25 @@ public class StockMovement {
 
     @Column(nullable = false)
     @Setter
-    private Date movementDate;
+    private LocalDateTime movementDate;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ToString.Exclude
+    @Setter
+    private Product product;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @ToString.Exclude
+    @Setter
+    private PurchaseOrder purchaseOrder;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ToString.Exclude
+    @Setter
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @ToString.Exclude
+    @Setter
+    private Billing billing;
 }

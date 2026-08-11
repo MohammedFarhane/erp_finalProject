@@ -31,4 +31,13 @@ public class BillingLine {
     @Setter
     private Double totalLinePrice;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ToString.Exclude
+    @Setter
+    private Product product;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ToString.Exclude
+    @Setter
+    private Billing billing;
 }

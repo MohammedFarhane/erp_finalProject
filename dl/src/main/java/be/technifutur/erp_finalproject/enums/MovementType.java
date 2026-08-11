@@ -1,7 +1,7 @@
 package be.technifutur.erp_finalproject.enums;
 
 public enum MovementType {
-    ENTRREE,
+    ENTREE,
     SORTIE,
     AJUSTEMENT
 }

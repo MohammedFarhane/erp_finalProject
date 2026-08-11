@@ -3,9 +3,8 @@ package be.technifutur.erp_finalproject.entities;
 import be.technifutur.erp_finalproject.enums.PurchaseOrderState;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.ColumnDefault;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 @Entity
 @NoArgsConstructor @AllArgsConstructor
@@ -18,16 +17,25 @@ public class PurchaseOrder {
 
     @Column(nullable = false)
     @Setter
-    private Date date;
+    private LocalDate date;
 
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    @ColumnDefault("'EN_ATTENTE'")
     @Setter
     private PurchaseOrderState state;
 
     @Column(nullable = false)
     @Setter
     private Double totalPrice;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ToString.Exclude
+    @Setter
+    private Supplier supplier;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ToString.Exclude
+    @Setter
+    private User user;
 }

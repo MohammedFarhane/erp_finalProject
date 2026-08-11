@@ -23,4 +23,13 @@ public class PurchaseOrderLine {
     @Setter
     private Double unitPrice;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ToString.Exclude
+    @Setter
+    private Product product;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ToString.Exclude
+    @Setter
+    private PurchaseOrder purchaseOrder;
 }

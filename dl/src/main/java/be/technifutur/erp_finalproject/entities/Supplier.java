@@ -15,6 +15,10 @@ public class Supplier {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, length = 100)
+    @Setter
+    private String name;
+
     @Column(nullable = false, unique = true, length = 100)
     @Setter
     private String email;
@@ -22,4 +26,9 @@ public class Supplier {
     @Column(nullable = false, unique = true, length = 100)
     @Setter
     private String phone;
+
+    //Le fournisseur n'a qu'une seule adresse
+    @Embedded
+    @Setter
+    private Address address;
 }

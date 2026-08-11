@@ -31,7 +31,7 @@ public class Product {
 
     @Column(nullable = false)
     @Setter
-    private double tva_rate;
+    private double tvaRate;
 
     @Column(nullable = false)
     @Setter
@@ -40,4 +40,9 @@ public class Product {
     @Column(nullable = false)
     @Setter
     private int minStockQuantity;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ToString.Exclude
+    @Setter
+    private Category category;
 }

@@ -1,4 +1,4 @@
-package be.technifutur.erp_finalproject.erp_finalproject.erp_finalproject;
+package be.technifutur.erp_finalproject;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
