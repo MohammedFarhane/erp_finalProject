@@ -33,10 +33,6 @@ public class Product {
     @Setter
     private double tvaRate;
 
-//    @Column(nullable = false)
-//    @Setter
-//    private int stockQuantity;
-
     @Column(nullable = false)
     @Setter
     private int minStockQuantity;
@@ -46,7 +42,7 @@ public class Product {
     @Setter
     private Category category;
 
-    public Product(String name, String description, double purchasePrice, double sellingPrice, double tvaRate, int minStockQuantity, Category category) {
+    public Product(String name, String description, Double purchasePrice, Double sellingPrice, double tvaRate, int minStockQuantity, Category category) {
         this.name = name;
         this.description = description;
         this.purchasePrice = purchasePrice;
