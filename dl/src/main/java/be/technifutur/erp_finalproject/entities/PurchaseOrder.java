@@ -8,7 +8,7 @@ import java.time.LocalDate;
 
 @Entity
 @NoArgsConstructor @AllArgsConstructor
-@ToString @EqualsAndHashCode(callSuper = false, of = {})
+@ToString
 @Getter
 public class PurchaseOrder {
 

@@ -5,7 +5,7 @@ import lombok.*;
 
 @Entity
 @NoArgsConstructor @AllArgsConstructor
-@ToString @EqualsAndHashCode(callSuper = false, of = {})
+@ToString
 @Getter
 public class Product {
 
@@ -13,7 +13,10 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 100)
+    @Column(nullable = false, unique = true, length = 30)
+    private String reference;
+
+    @Column(nullable = false, length = 100)
     @Setter
     private String name;
 
@@ -37,12 +40,16 @@ public class Product {
     @Setter
     private int minStockQuantity;
 
+    @Setter
+    private boolean archived;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @ToString.Exclude
     @Setter
     private Category category;
 
-    public Product(String name, String description, Double purchasePrice, Double sellingPrice, double tvaRate, int minStockQuantity, Category category) {
+    public Product(String reference, String name, String description, Double purchasePrice, Double sellingPrice, double tvaRate, int minStockQuantity, Category category) {
+        this.reference = reference;
         this.name = name;
         this.description = description;
         this.purchasePrice = purchasePrice;

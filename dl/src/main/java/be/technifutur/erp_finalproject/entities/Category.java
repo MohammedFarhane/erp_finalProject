@@ -5,7 +5,7 @@ import lombok.*;
 
 @Entity
 @NoArgsConstructor @AllArgsConstructor
-@ToString @EqualsAndHashCode(callSuper = false, of = {})
+@ToString
 @Getter
 public class Category {
 

@@ -10,7 +10,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-@EqualsAndHashCode(callSuper = false, of = {})
+@EqualsAndHashCode(of = "email")
 @Getter
 public class Client {
 
