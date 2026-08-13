@@ -1,9 +1,10 @@
 package be.technifutur.erp_finalproject.exceptions.category;
 
+import be.technifutur.erp_finalproject.exceptions.NotFoundException;
 import lombok.Getter;
 
 @Getter
-public class CategoryNotFoundException extends RuntimeException {
+public class CategoryNotFoundException extends NotFoundException {
 
     private final Long id;
 

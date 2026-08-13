@@ -1,9 +1,10 @@
 package be.technifutur.erp_finalproject.exceptions.category;
 
+import be.technifutur.erp_finalproject.exceptions.ConflictException;
 import lombok.Getter;
 
 @Getter
-public class CategoryNotEmptyException extends RuntimeException {
+public class CategoryNotEmptyException extends ConflictException {
 
     private final Long id;
 
