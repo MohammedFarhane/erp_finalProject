@@ -4,6 +4,7 @@ import be.technifutur.erp_finalproject.enums.PurchaseOrderState;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
@@ -19,15 +20,14 @@ public class PurchaseOrder {
     @Setter
     private LocalDate date;
 
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Setter
     private PurchaseOrderState state;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 10, scale = 2)
     @Setter
-    private Double totalPrice;
+    private BigDecimal totalPrice;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @ToString.Exclude

@@ -3,6 +3,8 @@ package be.technifutur.erp_finalproject.entities;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Entity
 @NoArgsConstructor @AllArgsConstructor
 @ToString
@@ -24,13 +26,13 @@ public class Product {
     @Setter
     private String description;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 10, scale = 2)
     @Setter
-    private Double purchasePrice;
+    private BigDecimal purchasePrice;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 10, scale = 2)
     @Setter
-    private Double sellingPrice;
+    private BigDecimal sellingPrice;
 
     @Column(nullable = false)
     @Setter
@@ -48,7 +50,7 @@ public class Product {
     @Setter
     private Category category;
 
-    public Product(String reference, String name, String description, Double purchasePrice, Double sellingPrice, double tvaRate, int minStockQuantity, Category category) {
+    public Product(String reference, String name, String description, BigDecimal purchasePrice, BigDecimal sellingPrice, double tvaRate, int minStockQuantity, Category category) {
         this.reference = reference;
         this.name = name;
         this.description = description;
@@ -58,4 +60,5 @@ public class Product {
         this.minStockQuantity = minStockQuantity;
         this.category = category;
     }
+
 }

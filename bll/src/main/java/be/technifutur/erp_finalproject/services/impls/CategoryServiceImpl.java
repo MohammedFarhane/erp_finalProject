@@ -6,7 +6,7 @@ import be.technifutur.erp_finalproject.exceptions.category.CategoryNotEmptyExcep
 import be.technifutur.erp_finalproject.exceptions.category.CategoryNotFoundException;
 import be.technifutur.erp_finalproject.repositories.CategoryRepository;
 import be.technifutur.erp_finalproject.repositories.ProductRepository;
-import be.technifutur.erp_finalproject.services.CategoryService;
+import be.technifutur.erp_finalproject.services.categoryService.CategoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

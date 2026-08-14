@@ -4,6 +4,7 @@ import be.technifutur.erp_finalproject.enums.BillingState;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 
@@ -27,21 +28,21 @@ public class Billing {
     @Setter
     private BillingState state;
 
-    @Column
     @Setter
-    private Double discount;
+    @Column(precision = 10, scale = 2)
+    private BigDecimal discount;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 10, scale = 2)
     @Setter
-    private Double subTotal;
+    private BigDecimal subTotal;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 10, scale = 2)
     @Setter
-    private Double amountTva;
+    private BigDecimal amountTva;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 10, scale = 2)
     @Setter
-    private Double totalPrice;
+    private BigDecimal totalPrice;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @ToString.Exclude

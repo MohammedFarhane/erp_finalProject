@@ -3,6 +3,8 @@ package be.technifutur.erp_finalproject.entities;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,17 +20,17 @@ public class QuoteLine {
     @Setter
     private int quantity;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 10, scale = 2)
     @Setter
-    private Double unitPrice;
+    private BigDecimal unitPrice;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 10, scale = 2)
     @Setter
-    private Double tvaAmount;
+    private BigDecimal tvaAmount;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 10, scale = 2)
     @Setter
-    private Double totalLinePrice;
+    private BigDecimal totalLinePrice;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @ToString.Exclude

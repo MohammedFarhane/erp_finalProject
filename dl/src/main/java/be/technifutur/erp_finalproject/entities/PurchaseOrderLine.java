@@ -3,6 +3,8 @@ package be.technifutur.erp_finalproject.entities;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,9 +20,9 @@ public class PurchaseOrderLine {
     @Setter
     private int quantity;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 10, scale = 2)
     @Setter
-    private Double unitPrice;
+    private BigDecimal unitPrice;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @ToString.Exclude

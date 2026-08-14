@@ -4,6 +4,7 @@ import be.technifutur.erp_finalproject.enums.QuoteState;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
@@ -26,21 +27,21 @@ public class Quote {
     @Setter
     private LocalDate quoteDate;
 
-    @Column
+    @Column(precision = 10, scale = 2)
     @Setter
-    private Double discount;
+    private BigDecimal discount;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 10, scale = 2)
     @Setter
-    private Double subTotal;
+    private BigDecimal subTotal;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 10, scale = 2)
     @Setter
-    private Double amountTva;
+    private BigDecimal amountTva;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 10, scale = 2)
     @Setter
-    private Double totalPrice;
+    private BigDecimal totalPrice;
 
     @OneToOne(fetch = FetchType.LAZY)
     @ToString.Exclude

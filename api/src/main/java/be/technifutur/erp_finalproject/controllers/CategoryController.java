@@ -1,8 +1,8 @@
 package be.technifutur.erp_finalproject.controllers;
 
-import be.technifutur.erp_finalproject.models.dto_request.CategoryCreateRequest;
+import be.technifutur.erp_finalproject.models.dto_request.CategoryRequest;
 import be.technifutur.erp_finalproject.models.dto_response.CategoryResponse;
-import be.technifutur.erp_finalproject.services.CategoryService;
+import be.technifutur.erp_finalproject.services.categoryService.CategoryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -39,7 +39,7 @@ public class CategoryController {
 //    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping
     public ResponseEntity<Void> create(
-            @Valid @RequestBody CategoryCreateRequest request
+            @Valid @RequestBody CategoryRequest request
 //            @AuthenticationPrincipal JwtUtils.UserSession user
             ){
         Long id = categoryService.save(request.toCategory());
@@ -55,7 +55,7 @@ public class CategoryController {
     @PutMapping("/{id}")
     public ResponseEntity<CategoryResponse> update(
             @PathVariable Long id,
-            @Valid @RequestBody CategoryCreateRequest request
+            @Valid @RequestBody CategoryRequest request
     ) {
         var category = categoryService.update(id, request.toCategory());
         var response = CategoryResponse.fromCategory(category);

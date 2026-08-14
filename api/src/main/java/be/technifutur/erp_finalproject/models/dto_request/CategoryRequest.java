@@ -4,7 +4,7 @@ import be.technifutur.erp_finalproject.entities.Category;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-public record CategoryCreateRequest(
+public record CategoryRequest(
         @NotBlank @Size(max = 100)
         String name
 ) {
