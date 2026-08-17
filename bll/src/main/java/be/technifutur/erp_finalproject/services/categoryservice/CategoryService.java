@@ -1,4 +1,4 @@
-package be.technifutur.erp_finalproject.services.categoryService;
+package be.technifutur.erp_finalproject.services.categoryservice;
 
 import be.technifutur.erp_finalproject.entities.Category;
 

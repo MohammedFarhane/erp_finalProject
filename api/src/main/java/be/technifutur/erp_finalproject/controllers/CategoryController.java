@@ -2,7 +2,7 @@ package be.technifutur.erp_finalproject.controllers;
 
 import be.technifutur.erp_finalproject.models.dto_request.CategoryRequest;
 import be.technifutur.erp_finalproject.models.dto_response.CategoryResponse;
-import be.technifutur.erp_finalproject.services.categoryService.CategoryService;
+import be.technifutur.erp_finalproject.services.categoryservice.CategoryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

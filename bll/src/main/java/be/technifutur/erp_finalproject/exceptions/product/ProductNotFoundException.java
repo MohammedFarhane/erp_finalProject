@@ -12,5 +12,4 @@ public class ProductNotFoundException extends NotFoundException {
         super("Le produit " + id + " n'existe pas");
         this.id = id;
     }
-
 }

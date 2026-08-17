@@ -1,6 +1,6 @@
 package be.technifutur.erp_finalproject.models.dto_request;
 
-import be.technifutur.erp_finalproject.services.productService.ProductForm;
+import be.technifutur.erp_finalproject.services.productservice.ProductForm;
 import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;

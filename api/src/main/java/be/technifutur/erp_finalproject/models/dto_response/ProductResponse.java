@@ -1,7 +1,7 @@
 package be.technifutur.erp_finalproject.models.dto_response;
 
 import be.technifutur.erp_finalproject.entities.Product;
-import be.technifutur.erp_finalproject.services.productService.ProductWithStock;
+import be.technifutur.erp_finalproject.services.productservice.ProductWithStock;
 
 import java.math.BigDecimal;
 

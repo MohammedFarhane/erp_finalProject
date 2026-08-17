@@ -49,4 +49,12 @@ public class StockMovement {
     @ToString.Exclude
     @Setter
     private Billing billing;
+
+    public StockMovement(MovementType movementType, int quantity, LocalDateTime movementDate, Product product, User user) {
+        this.type = movementType;
+        this.quantity = quantity;
+        this.movementDate = movementDate;
+        this.product = product;
+        this.user = user;
+    }
 }

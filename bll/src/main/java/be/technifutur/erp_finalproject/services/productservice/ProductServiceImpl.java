@@ -1,4 +1,4 @@
-package be.technifutur.erp_finalproject.services.impls;
+package be.technifutur.erp_finalproject.services.productservice;
 
 import be.technifutur.erp_finalproject.ReferenceGenerator;
 import be.technifutur.erp_finalproject.entities.Category;
@@ -9,9 +9,6 @@ import be.technifutur.erp_finalproject.projections.ProductStock;
 import be.technifutur.erp_finalproject.repositories.CategoryRepository;
 import be.technifutur.erp_finalproject.repositories.ProductRepository;
 import be.technifutur.erp_finalproject.repositories.StockMovementRepository;
-import be.technifutur.erp_finalproject.services.productService.ProductForm;
-import be.technifutur.erp_finalproject.services.productService.ProductService;
-import be.technifutur.erp_finalproject.services.productService.ProductWithStock;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

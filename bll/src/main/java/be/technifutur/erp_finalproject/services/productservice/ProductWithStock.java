@@ -1,4 +1,4 @@
-package be.technifutur.erp_finalproject.services.productService;
+package be.technifutur.erp_finalproject.services.productservice;
 
 import be.technifutur.erp_finalproject.entities.Product;
 

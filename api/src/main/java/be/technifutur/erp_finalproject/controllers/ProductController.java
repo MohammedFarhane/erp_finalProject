@@ -2,7 +2,7 @@ package be.technifutur.erp_finalproject.controllers;
 
 import be.technifutur.erp_finalproject.models.dto_request.ProductRequest;
 import be.technifutur.erp_finalproject.models.dto_response.ProductResponse;
-import be.technifutur.erp_finalproject.services.productService.ProductService;
+import be.technifutur.erp_finalproject.services.productservice.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
