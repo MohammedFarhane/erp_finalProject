@@ -31,6 +31,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Page<ProductWithStock> search(Long categoryId, String name, Pageable pageable) {
+
         String pattern = (name == null || name.isBlank())
                 ? null
                 : "%" + name.toLowerCase() + "%";
@@ -62,14 +63,17 @@ public class ProductServiceImpl implements ProductService {
     public ProductWithStock findById(Long id) {
         Product product = productRepository.findByIdAndArchivedFalse(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
+
         return new ProductWithStock(product, stockMovementRepository.computeStockForProduct(id));
     }
 
     @Override
     @Transactional
     public Long create(ProductForm form) {
+
         Category category = categoryRepository.findById(form.categoryId())
                 .orElseThrow(() -> new CategoryNotFoundException(form.categoryId()));
+
         Product product = new Product(
                 referenceGenerator.next("PRD"),
                 form.name(),
@@ -86,8 +90,10 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     @Override
     public ProductWithStock update(Long id, ProductForm form) {
+
         Product product = productRepository.findByIdAndArchivedFalse(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
+
         Category category = categoryRepository.findById(form.categoryId())
                 .orElseThrow(() -> new CategoryNotFoundException(form.categoryId()));
 
@@ -105,9 +111,12 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     @Override
     public void delete(Long id) {
+
         Product product = productRepository.findByIdAndArchivedFalse(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
+
         product.setArchived(true);
+
         productRepository.save(product);
     }
 }

@@ -55,6 +55,7 @@ public class ProductController {
             @PathVariable Long id
     ) {
         ProductResponse response = ProductResponse.from(productService.findById(id));
+
         return ResponseEntity.ok().body(response);
     }
 
@@ -64,6 +65,7 @@ public class ProductController {
             @Valid @RequestBody ProductRequest request
     ) {
         ProductResponse response = ProductResponse.from(productService.update(id, request.toForm()));
+
         return ResponseEntity.ok().body(response);
     }
 
@@ -72,6 +74,7 @@ public class ProductController {
             @PathVariable Long id
     ) {
         productService.delete(id);
+
         return ResponseEntity.noContent().build();
     }
 }
