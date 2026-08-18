@@ -22,12 +22,23 @@ public class Supplier {
     @Setter
     private String email;
 
-    @Column(nullable = false, unique = true, length = 100)
+    @Column(nullable = false, length = 100)
     @Setter
     private String phone;
+
+    @Column(nullable = false)
+    @Setter
+    private boolean archived;
 
     //Le fournisseur n'a qu'une seule adresse
     @Embedded
     @Setter
     private Address address;
+
+    public Supplier(String name, String email, String phone, Address address) {
+        this.name = name;
+        this.email = email;
+        this.phone = phone;
+        this.address = address;
+    }
 }

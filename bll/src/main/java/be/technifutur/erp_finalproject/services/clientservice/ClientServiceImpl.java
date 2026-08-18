@@ -38,6 +38,7 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public Client findById(Long id) {
+
         return clientRepository.findByIdAndArchivedFalse(id)
                 .orElseThrow(() -> new ClientNotFoundException(id));
     }
@@ -59,7 +60,6 @@ public class ClientServiceImpl implements ClientService {
         client.getAddresses().add(new TypeAddress(AddressType.LIVRAISON, form.address()));
 
         return clientRepository.save(client).getId();
-
     }
 
     @Transactional
