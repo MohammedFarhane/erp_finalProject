@@ -1,16 +1,10 @@
 package be.technifutur.erp_finalproject.datainitializer;
 
 import be.technifutur.erp_finalproject.ReferenceGenerator;
-import be.technifutur.erp_finalproject.entities.Category;
-import be.technifutur.erp_finalproject.entities.Product;
-import be.technifutur.erp_finalproject.entities.StockMovement;
-import be.technifutur.erp_finalproject.entities.User;
+import be.technifutur.erp_finalproject.entities.*;
 import be.technifutur.erp_finalproject.enums.MovementType;
 import be.technifutur.erp_finalproject.enums.UserRole;
-import be.technifutur.erp_finalproject.repositories.CategoryRepository;
-import be.technifutur.erp_finalproject.repositories.ProductRepository;
-import be.technifutur.erp_finalproject.repositories.StockMovementRepository;
-import be.technifutur.erp_finalproject.repositories.UserRepository;
+import be.technifutur.erp_finalproject.repositories.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -29,6 +23,7 @@ public class Initializer implements CommandLineRunner {
     private final UserRepository userRepository;
     private final ReferenceGenerator referenceGenerator;
     private final StockMovementRepository stockMovementRepository;
+    private final SupplierRepository supplierRepository;
     private final Clock clock;
 
     @Override
@@ -59,6 +54,25 @@ public class Initializer implements CommandLineRunner {
                 new StockMovement(MovementType.AJUSTEMENT_NEGATIF, 15, LocalDateTime.now(clock), samsung, admin),
                 new StockMovement(MovementType.AJUSTEMENT_POSITIF, 0, LocalDateTime.now(clock), jeans, admin)
             ));
+
+            Supplier fournisseurBelge =  supplierRepository.save(new Supplier("Fournitures Belges SA",
+                            "contact@fournitures.be", "042345678",
+                            new Address("Rue de l'Industrie", "45", "4000", "Liège")));
+            Supplier materiauxDuNord = supplierRepository.save(new Supplier("Matériaux du Nord SPRL",
+                    "info@materiauxdunord.be", "051987654",
+                    new Address("Avenue des Artisans", "12", "7000", "Mons")));
+
+            Supplier textilesWallons = supplierRepository.save(new Supplier("Textiles Wallons SA",
+                    "contact@textileswallons.be", "081456789",
+                    new Address("Chaussée de Namur", "78", "5000", "Namur")));
+
+            Supplier electroDistribution = supplierRepository.save(new Supplier("Électro Distribution Belgique",
+                    "commercial@electrodistrib.be", "064321098",
+                    new Address("Rue de la Station", "23", "6000", "Charleroi")));
+
+            Supplier boisEtCie = supplierRepository.save(new Supplier("Bois & Cie SPRL",
+                    "vente@boisetcie.be", "071654321",
+                    new Address("Rue des Forestiers", "5", "6001", "Marcinelle")));
         }
     }
 }

@@ -16,6 +16,9 @@ public class PurchaseOrder {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, unique = true, length = 30)
+    private String reference;
+
     @Column(nullable = false)
     @Setter
     private LocalDate date;
@@ -38,4 +41,14 @@ public class PurchaseOrder {
     @ToString.Exclude
     @Setter
     private User user;
+
+    public PurchaseOrder(String reference, LocalDate date, BigDecimal totalPrice,
+                         Supplier supplier, User user) {
+        this.reference = reference;
+        this.date = date;
+        this.totalPrice = totalPrice;
+        this.supplier = supplier;
+        this.state = PurchaseOrderState.EN_ATTENTE;
+        this.user = user;
+    }
 }

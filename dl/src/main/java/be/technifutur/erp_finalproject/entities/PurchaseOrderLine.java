@@ -33,4 +33,10 @@ public class PurchaseOrderLine {
     @ToString.Exclude
     @Setter
     private PurchaseOrder purchaseOrder;
+
+    public PurchaseOrderLine(int quantity, BigDecimal purchasePrice, Product product) {
+        this.quantity = quantity;
+        this.unitPrice = purchasePrice;
+        this.product = product;
+    }
 }

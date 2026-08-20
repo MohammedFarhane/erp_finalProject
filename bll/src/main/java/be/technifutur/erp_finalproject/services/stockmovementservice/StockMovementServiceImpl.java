@@ -1,8 +1,6 @@
 package be.technifutur.erp_finalproject.services.stockmovementservice;
 
-import be.technifutur.erp_finalproject.entities.Product;
-import be.technifutur.erp_finalproject.entities.StockMovement;
-import be.technifutur.erp_finalproject.entities.User;
+import be.technifutur.erp_finalproject.entities.*;
 import be.technifutur.erp_finalproject.enums.MovementType;
 import be.technifutur.erp_finalproject.exceptions.user.UserNotFoundException;
 import be.technifutur.erp_finalproject.exceptions.product.ProductNotFoundException;
@@ -18,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -53,5 +52,24 @@ public class StockMovementServiceImpl implements StockMovementService {
     @Override
     public Page<StockMovement> history(Long productId, Pageable pageable) {
         return stockMovementRepository.findByProductIdOrderByMovementDateDesc(productId, pageable);
+    }
+
+    @Override
+    @Transactional
+    public void recordReception(PurchaseOrder order, List<PurchaseOrderLine> lines, User user) {
+
+        LocalDateTime now = LocalDateTime.now(clock);
+
+        List<StockMovement> movements = lines
+                .stream()
+                .map(line -> {
+                    StockMovement movement = new StockMovement(
+                            MovementType.ENTREE, line.getQuantity(), now, line.getProduct(), user);
+                    movement.setPurchaseOrder(order);
+                    return movement;
+                })
+                .toList();
+
+        stockMovementRepository.saveAll(movements);
     }
 }

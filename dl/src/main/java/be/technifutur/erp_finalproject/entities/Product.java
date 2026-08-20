@@ -50,7 +50,8 @@ public class Product {
     @Setter
     private Category category;
 
-    public Product(String reference, String name, String description, BigDecimal purchasePrice, BigDecimal sellingPrice, double tvaRate, int minStockQuantity, Category category) {
+    public Product(String reference, String name, String description, BigDecimal purchasePrice,
+                   BigDecimal sellingPrice, double tvaRate, int minStockQuantity, Category category) {
         this.reference = reference;
         this.name = name;
         this.description = description;
