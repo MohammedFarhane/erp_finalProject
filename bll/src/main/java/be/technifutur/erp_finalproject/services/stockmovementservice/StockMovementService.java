@@ -1,9 +1,6 @@
 package be.technifutur.erp_finalproject.services.stockmovementservice;
 
-import be.technifutur.erp_finalproject.entities.PurchaseOrder;
-import be.technifutur.erp_finalproject.entities.PurchaseOrderLine;
-import be.technifutur.erp_finalproject.entities.StockMovement;
-import be.technifutur.erp_finalproject.entities.User;
+import be.technifutur.erp_finalproject.entities.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -16,4 +13,8 @@ public interface StockMovementService {
     Page<StockMovement> history(Long productId, Pageable pageable);
 
     void recordReception(PurchaseOrder order, List<PurchaseOrderLine> lines, User user);
+
+    void recordSale(Billing billing, List<BillingLine> lines, User user);
+
+    void recordReturn(Billing billing, List<BillingLine> lines, User user);
 }

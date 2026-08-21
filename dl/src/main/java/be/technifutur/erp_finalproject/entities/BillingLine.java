@@ -28,6 +28,10 @@ public class BillingLine {
     @Setter
     private double tvaRate;
 
+    @Column(nullable = false)
+    @Setter
+    private BigDecimal tvaAmount;
+
     @Column(nullable = false, precision = 10, scale = 2)
     @Setter
     private BigDecimal totalLinePrice;
@@ -41,4 +45,14 @@ public class BillingLine {
     @ToString.Exclude
     @Setter
     private Billing billing;
+
+    public BillingLine(int quantity, BigDecimal unitPrice, double tvaRate, BigDecimal tvaAmount,
+                       BigDecimal totalLinePrice, Product product) {
+        this.quantity = quantity;
+        this.unitPrice = unitPrice;
+        this.tvaRate = tvaRate;
+        this.tvaAmount = tvaAmount;
+        this.totalLinePrice = totalLinePrice;
+        this.product = product;
+    }
 }

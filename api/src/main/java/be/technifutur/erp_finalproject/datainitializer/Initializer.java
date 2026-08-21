@@ -2,6 +2,7 @@ package be.technifutur.erp_finalproject.datainitializer;
 
 import be.technifutur.erp_finalproject.ReferenceGenerator;
 import be.technifutur.erp_finalproject.entities.*;
+import be.technifutur.erp_finalproject.enums.AddressType;
 import be.technifutur.erp_finalproject.enums.MovementType;
 import be.technifutur.erp_finalproject.enums.UserRole;
 import be.technifutur.erp_finalproject.repositories.*;
@@ -25,6 +26,7 @@ public class Initializer implements CommandLineRunner {
     private final StockMovementRepository stockMovementRepository;
     private final SupplierRepository supplierRepository;
     private final Clock clock;
+    private final ClientRepository clientRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -73,6 +75,21 @@ public class Initializer implements CommandLineRunner {
             Supplier boisEtCie = supplierRepository.save(new Supplier("Bois & Cie SPRL",
                     "vente@boisetcie.be", "071654321",
                     new Address("Rue des Forestiers", "5", "6001", "Marcinelle")));
+
+            Client dupont = new Client("Dupont SPRL", "contact@dupont.be", "042111111");
+            dupont.getAddresses().add(new TypeAddress(
+                    AddressType.LIVRAISON,
+                    new Address("Rue Neuve", "12", "4000", "Liège")));
+            clientRepository.save(dupont);
+
+            Client martin = new Client("Martin & Fils", "info@martin.be", "022222222");
+            martin.getAddresses().add(new TypeAddress(
+                    AddressType.LIVRAISON,
+                    new Address("Chaussée de Wavre", "230", "1050", "Bruxelles")));
+            martin.getAddresses().add(new TypeAddress(
+                    AddressType.FACTURATION,
+                    new Address("Avenue Louise", "500", "1050", "Bruxelles")));
+            clientRepository.save(martin);
         }
     }
 }

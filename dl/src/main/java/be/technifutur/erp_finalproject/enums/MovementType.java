@@ -4,5 +4,6 @@ public enum MovementType {
     ENTREE,
     SORTIE,
     AJUSTEMENT_POSITIF,
-    AJUSTEMENT_NEGATIF
+    AJUSTEMENT_NEGATIF,
+    RETOUR_CLIENT
 }

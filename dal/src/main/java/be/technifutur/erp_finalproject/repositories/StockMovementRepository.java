@@ -41,4 +41,3 @@ public interface StockMovementRepository extends JpaRepository<StockMovement, Lo
     @EntityGraph(attributePaths = {"user"})
     Page<StockMovement> findByProductIdOrderByMovementDateDesc(Long productId, Pageable pageable);
 }
-

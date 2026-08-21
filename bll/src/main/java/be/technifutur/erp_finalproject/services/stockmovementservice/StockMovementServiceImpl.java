@@ -17,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -66,6 +68,58 @@ public class StockMovementServiceImpl implements StockMovementService {
                     StockMovement movement = new StockMovement(
                             MovementType.ENTREE, line.getQuantity(), now, line.getProduct(), user);
                     movement.setPurchaseOrder(order);
+                    return movement;
+                })
+                .toList();
+
+        stockMovementRepository.saveAll(movements);
+    }
+
+    @Override
+    @Transactional
+    public void recordSale(Billing billing, List<BillingLine> lines, User user) {
+
+        Map<Long, Integer> quantitiesByProduct = lines.stream()
+                .collect(Collectors.groupingBy(
+                        line -> line.getProduct().getId(),
+                        Collectors.summingInt(BillingLine::getQuantity)));
+
+        for (Map.Entry<Long, Integer> entry : quantitiesByProduct.entrySet()) {
+            int stock = stockMovementRepository.computeStockForProduct(entry.getKey());
+
+            if (stock < entry.getValue()) {
+                throw new InsufficientStockException(entry.getKey(), stock, entry.getValue());
+            }
+        }
+
+        LocalDateTime now = LocalDateTime.now(clock);
+
+        List<StockMovement> movements = lines
+                    .stream()
+                    .map(l -> {
+                        StockMovement movement = new StockMovement(
+                                MovementType.SORTIE, l.getQuantity(), now, l.getProduct(), user);
+
+                        movement.setBilling(billing);
+
+                        return movement;
+                    })
+                    .toList();
+
+        stockMovementRepository.saveAll(movements);
+    }
+
+    @Override
+    @Transactional
+    public void recordReturn(Billing billing, List<BillingLine> lines, User user) {
+
+        LocalDateTime now = LocalDateTime.now(clock);
+
+        List<StockMovement> movements = lines.stream()
+                .map(line -> {
+                    StockMovement movement = new StockMovement(
+                            MovementType.RETOUR_CLIENT, line.getQuantity(), now, line.getProduct(), user);
+                    movement.setBilling(billing);
                     return movement;
                 })
                 .toList();
