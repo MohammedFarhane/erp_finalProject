@@ -9,6 +9,7 @@ import be.technifutur.erp_finalproject.exceptions.billing.PaymentExceedsBalanceE
 import be.technifutur.erp_finalproject.exceptions.client.ClientNotFoundException;
 import be.technifutur.erp_finalproject.exceptions.product.ProductNotFoundException;
 import be.technifutur.erp_finalproject.exceptions.user.UserNotFoundException;
+import be.technifutur.erp_finalproject.projections.BillingPaidAmount;
 import be.technifutur.erp_finalproject.repositories.*;
 import be.technifutur.erp_finalproject.services.billinglineservice.BillingLineForm;
 import be.technifutur.erp_finalproject.services.stockmovementservice.StockMovementService;
@@ -24,6 +25,8 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +44,7 @@ public class BillingServiceImpl implements BillingService{
     private final StockMovementService stockMovementService;
 
     @Override
-    public Page<Billing> search(String reference, String clientName, BillingState state,
+    public Page<BillingSummary> search(String reference, String clientName, BillingState state,
                                 LocalDate from, LocalDate to, Pageable pageable) {
 
         String referencePattern = (reference == null || reference.isBlank())
@@ -52,7 +55,24 @@ public class BillingServiceImpl implements BillingService{
                 ? null
                 : "%" + clientName.toLowerCase() + "%";
 
-        return billingRepository.search(referencePattern, namePattern, state, from, to, pageable);
+        Page<Billing> page = billingRepository.search(referencePattern, namePattern, state, from, to, pageable);
+
+        List<Long> ids = page
+                .getContent()
+                .stream()
+                .map(Billing::getId)
+                .toList();
+
+        if (ids.isEmpty()) {
+            return page.map(billing -> new BillingSummary(billing, BigDecimal.ZERO));
+        }
+
+        Map<Long, BigDecimal> paidBilling = paymentRepository.computePaymentsForBilling(ids)
+                .stream()
+                .collect(Collectors.toMap(BillingPaidAmount::getBillingId, BillingPaidAmount::getPaidAmount));
+
+        return page.map(billing ->
+                new BillingSummary(billing, paidBilling.getOrDefault(billing.getId(), BigDecimal.ZERO)));
     }
 
     @Override

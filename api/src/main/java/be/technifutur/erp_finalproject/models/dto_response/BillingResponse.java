@@ -5,6 +5,7 @@ import be.technifutur.erp_finalproject.enums.BillingState;
 import be.technifutur.erp_finalproject.services.billingservice.BillingWithLines;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -24,7 +25,7 @@ public record BillingResponse(
 ) {
     public static BillingResponse fromBillingResponse(BillingWithLines bwl) {
         Billing billing = bwl.billing();
-        BigDecimal paid = bwl.paidAmount();
+        BigDecimal paid = bwl.paidAmount().setScale(2, RoundingMode.HALF_UP);
         BigDecimal remaining = billing.getTotalPrice().subtract(paid);
 
         return new BillingResponse(
