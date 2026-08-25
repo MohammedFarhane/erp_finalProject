@@ -1,12 +1,12 @@
-package be.technifutur.erp_finalproject.services.billingservice;
+package be.technifutur.erp_finalproject.services.quoteservice;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-public record BillingForm(
+public record QuoteForm(
         Long clientId,
         Long userId,
         BigDecimal discount,
-        List<BillingLineForm> lines
+        List<QuoteLineForm> lines
 ) {
 }

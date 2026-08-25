@@ -8,6 +8,7 @@ import be.technifutur.erp_finalproject.enums.UserRole;
 import be.technifutur.erp_finalproject.repositories.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -25,8 +26,9 @@ public class Initializer implements CommandLineRunner {
     private final ReferenceGenerator referenceGenerator;
     private final StockMovementRepository stockMovementRepository;
     private final SupplierRepository supplierRepository;
-    private final Clock clock;
     private final ClientRepository clientRepository;
+    private final Clock clock;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) throws Exception {
@@ -48,8 +50,8 @@ public class Initializer implements CommandLineRunner {
             Product sonyHeadphones = productRepository.save(new Product(referenceGenerator.next("PRD"), "Sony WH-1000XM4", "Wireless noise-canceling headphones", new BigDecimal("249.99"), new BigDecimal("349.99"), 0.21, 10, electronics));
             Product nikeShoes = productRepository.save(new Product(referenceGenerator.next("PRD"), "Nike Air Max 270", "Comfortable running shoes with excellent cushioning", new BigDecimal("119.99"), new BigDecimal("169.99"), 0.21, 20, clothing));
 
-            User admin = userRepository.save(new User("Admin", "admin@admin.be", "test123", UserRole.ADMIN));
-            User employee = userRepository.save(new User("Employee", "employee@employee.be", "test123", UserRole.EMPLOYEE));
+            User admin = userRepository.save(new User("Admin", "admin@admin.be", passwordEncoder.encode("test123"), UserRole.ADMIN));
+            User employee = userRepository.save(new User("Employee", "employee@employee.be", passwordEncoder.encode("test123"), UserRole.EMPLOYEE));
 
             stockMovementRepository.saveAll(List.of(
                 new StockMovement(MovementType.ENTREE, 50, LocalDateTime.now(clock), iphone, admin),

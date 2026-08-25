@@ -11,7 +11,6 @@ import be.technifutur.erp_finalproject.exceptions.product.ProductNotFoundExcepti
 import be.technifutur.erp_finalproject.exceptions.user.UserNotFoundException;
 import be.technifutur.erp_finalproject.projections.BillingPaidAmount;
 import be.technifutur.erp_finalproject.repositories.*;
-import be.technifutur.erp_finalproject.services.billinglineservice.BillingLineForm;
 import be.technifutur.erp_finalproject.services.stockmovementservice.StockMovementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -104,11 +103,11 @@ public class BillingServiceImpl implements BillingService{
             Product product = productRepository.findByIdAndArchivedFalse(lineForm.productId())
                     .orElseThrow(() -> new ProductNotFoundException(lineForm.productId()));
 
-            BigDecimal unirPrice = product.getSellingPrice();
+            BigDecimal unitPrice = product.getSellingPrice();
 
             double tvaRate = product.getTvaRate();
 
-            BigDecimal totalPrice = unirPrice
+            BigDecimal totalPrice = unitPrice
                     .multiply(BigDecimal.valueOf(lineForm.quantity()))
                     .setScale(2, RoundingMode.HALF_UP);
 
@@ -116,7 +115,7 @@ public class BillingServiceImpl implements BillingService{
                     .multiply(BigDecimal.valueOf(tvaRate))
                     .setScale(2, RoundingMode.HALF_UP);
 
-            lines.add(new BillingLine(lineForm.quantity(), unirPrice, tvaRate, tvaAmount, totalPrice, product));
+            lines.add(new BillingLine(lineForm.quantity(), unitPrice, tvaRate, tvaAmount, totalPrice, product));
         }
 
         BigDecimal subTotal = lines
@@ -241,5 +240,37 @@ public class BillingServiceImpl implements BillingService{
         billing.setState(BillingState.ANNULEE);
 
         return new BillingWithLines(billing, lines, paymentRepository.computeAmountForBilling(id));
+    }
+
+    @Override
+    @Transactional
+    public Billing createFromQuote(Quote quote, List<QuoteLine> quoteLines, User user) {
+        Billing billing = billingRepository.save(new Billing(
+                referenceGenerator.next("FAC"),
+                LocalDate.now(clock),
+                quote.getDiscount(),
+                quote.getSubTotal(),
+                quote.getAmountTva(),
+                quote.getTotalPrice(),
+                user,
+                quote.getClient()
+        ));
+
+        List<BillingLine> lines = quoteLines
+                .stream()
+                .map(ql -> new BillingLine(
+                        ql.getQuantity(),
+                        ql.getUnitPrice(),
+                        ql.getTvaRate(),
+                        ql.getTvaAmount(),
+                        ql.getTotalLinePrice(),
+                        ql.getProduct()))
+                .toList();
+
+        lines.forEach(line -> line.setBilling(billing));
+
+        billingLineRepository.saveAll(lines);
+
+        return billing;
     }
 }

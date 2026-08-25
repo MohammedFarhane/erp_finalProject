@@ -18,6 +18,7 @@ public class Quote {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Setter
     @Column(nullable = false, unique = true, length = 30)
     private String reference;
 
@@ -30,13 +31,13 @@ public class Quote {
     @Setter
     private LocalDate quoteDate;
 
-    @Column(precision = 10, scale = 2)
-    @Setter
-    private BigDecimal discount;
-
     @Column(nullable = false, precision = 10, scale = 2)
     @Setter
     private BigDecimal subTotal;
+
+    @Column(precision = 10, scale = 2)
+    @Setter
+    private BigDecimal discount;
 
     @Column(nullable = false, precision = 10, scale = 2)
     @Setter
@@ -45,6 +46,10 @@ public class Quote {
     @Column(nullable = false, precision = 10, scale = 2)
     @Setter
     private BigDecimal totalPrice;
+
+    @Column(nullable = false)
+    @Setter
+    private LocalDate expirationDate;
 
     @OneToOne(fetch = FetchType.LAZY)
     @ToString.Exclude
@@ -60,4 +65,18 @@ public class Quote {
     @ToString.Exclude
     @Setter
     private User user;
+
+    public Quote(String reference, LocalDate quoteDate, BigDecimal subTotal, BigDecimal discount,
+                 BigDecimal amountTva, BigDecimal totalPrice, LocalDate expirationDate, Client client, User user) {
+        this.reference = reference;
+        this.quoteDate = quoteDate;
+        this.subTotal = subTotal;
+        this.discount = discount;
+        this.amountTva = amountTva;
+        this.totalPrice = totalPrice;
+        this.expirationDate = expirationDate;
+        this.client = client;
+        this.user = user;
+        this.state = QuoteState.BROUILLON;
+    }
 }

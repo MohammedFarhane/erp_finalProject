@@ -24,6 +24,10 @@ public class QuoteLine {
     @Setter
     private BigDecimal unitPrice;
 
+    @Column(nullable = false)
+    @Setter
+    private double tvaRate;
+
     @Column(nullable = false, precision = 10, scale = 2)
     @Setter
     private BigDecimal tvaAmount;
@@ -41,4 +45,14 @@ public class QuoteLine {
     @ToString.Exclude
     @Setter
     private Quote quote;
+
+    public QuoteLine(int quantity, BigDecimal unitPrice, double tvaRate, BigDecimal tvaAmount,
+                     BigDecimal totalLinePrice, Product product) {
+        this.quantity = quantity;
+        this.unitPrice = unitPrice;
+        this.tvaRate = tvaRate;
+        this.tvaAmount = tvaAmount;
+        this.totalLinePrice = totalLinePrice;
+        this.product = product;
+    }
 }

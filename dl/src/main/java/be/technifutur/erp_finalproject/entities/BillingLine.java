@@ -28,7 +28,7 @@ public class BillingLine {
     @Setter
     private double tvaRate;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 10, scale = 2)
     @Setter
     private BigDecimal tvaAmount;
 

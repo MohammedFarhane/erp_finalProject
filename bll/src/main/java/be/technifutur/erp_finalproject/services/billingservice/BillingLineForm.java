@@ -1,4 +1,4 @@
-package be.technifutur.erp_finalproject.services.billinglineservice;
+package be.technifutur.erp_finalproject.services.billingservice;
 
 public record BillingLineForm(
         Long productId,
