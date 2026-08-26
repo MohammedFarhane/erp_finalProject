@@ -5,6 +5,7 @@ import be.technifutur.erp_finalproject.models.dto_request.QuoteRequest;
 import be.technifutur.erp_finalproject.models.dto_response.QuoteResponse;
 import be.technifutur.erp_finalproject.models.dto_response.QuoteSummaryResponse;
 import be.technifutur.erp_finalproject.services.quoteservice.QuoteService;
+import be.technifutur.erp_finalproject.utils.JwtUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -12,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -50,9 +52,10 @@ public class QuoteController {
 
     @PostMapping
     public ResponseEntity<Void> create(
-            @Valid @RequestBody QuoteRequest request
-    ) {
-        Long id = quoteService.create(request.toForm());
+            @Valid @RequestBody QuoteRequest request,
+            @AuthenticationPrincipal JwtUtils.UserSession user
+            ) {
+        Long id = quoteService.create(request.toForm(user.id()));
 
         URI uri = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -76,10 +79,10 @@ public class QuoteController {
     @PostMapping("/{id}/accept")
     public ResponseEntity<QuoteResponse> accept(
             @PathVariable Long id,
-            @RequestParam Long userId
+            @AuthenticationPrincipal JwtUtils.UserSession user
     ) {
         QuoteResponse response = QuoteResponse
-                .fromQuoteResponse(quoteService.accept(id, userId));
+                .fromQuoteResponse(quoteService.accept(id, user.id()));
 
         return ResponseEntity.ok(response);
     }

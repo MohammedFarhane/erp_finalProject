@@ -16,3 +16,7 @@ spring:
         format_sql: true
 server:
   port: 8080
+erp:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration: 3600

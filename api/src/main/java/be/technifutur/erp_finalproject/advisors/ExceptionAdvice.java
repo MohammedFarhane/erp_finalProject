@@ -2,6 +2,7 @@ package be.technifutur.erp_finalproject.advisors;
 
 import be.technifutur.erp_finalproject.exceptions.ConflictException;
 import be.technifutur.erp_finalproject.exceptions.NotFoundException;
+import be.technifutur.erp_finalproject.exceptions.user.InvalidCredentialsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.validation.FieldError;
@@ -39,5 +40,10 @@ public class ExceptionAdvice {
                 );
         problem.setProperty("errors", errors);
         return problem;
+    }
+
+    @ExceptionHandler({InvalidCredentialsException.class})
+    public ProblemDetail handleInvalidCredentials(InvalidCredentialsException e) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, e.getMessage());
     }
 }

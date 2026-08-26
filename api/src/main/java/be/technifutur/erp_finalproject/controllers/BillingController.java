@@ -6,6 +6,7 @@ import be.technifutur.erp_finalproject.models.dto_request.PaymentRequest;
 import be.technifutur.erp_finalproject.models.dto_response.BillingResponse;
 import be.technifutur.erp_finalproject.models.dto_response.BillingSummaryResponse;
 import be.technifutur.erp_finalproject.services.billingservice.BillingService;
+import be.technifutur.erp_finalproject.utils.JwtUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -14,6 +15,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.data.web.PagedModel;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -55,9 +57,10 @@ public class BillingController {
 
     @PostMapping
     public ResponseEntity<Void> create(
-            @Valid @RequestBody BillingRequest request
+            @Valid @RequestBody BillingRequest request,
+            @AuthenticationPrincipal JwtUtils.UserSession user
     ) {
-        Long id = billingService.create(request.toForm());
+        Long id = billingService.create(request.toForm(user.id()));
 
         URI uri = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -71,10 +74,10 @@ public class BillingController {
     @PostMapping(value = "/{id}/validate")
     public ResponseEntity<BillingResponse> validate(
             @PathVariable Long id,
-            @RequestParam Long userId
+            @AuthenticationPrincipal JwtUtils.UserSession user
     ) {
         BillingResponse response = BillingResponse
-                .fromBillingResponse(billingService.validate(id, userId));
+                .fromBillingResponse(billingService.validate(id, user.id()));
 
         return ResponseEntity.ok(response);
     }
@@ -82,10 +85,11 @@ public class BillingController {
     @PostMapping(value = "/{id}/pay")
     public ResponseEntity<BillingResponse> pay(
             @PathVariable Long id,
-            @Valid @RequestBody PaymentRequest request
+            @Valid @RequestBody PaymentRequest request,
+            @AuthenticationPrincipal JwtUtils.UserSession user
     ) {
         BillingResponse response = BillingResponse
-                .fromBillingResponse(billingService.pay(id, request.toForm()));
+                .fromBillingResponse(billingService.pay(id, request.toForm(user.id())));
 
         return ResponseEntity.ok(response);
     }
@@ -93,10 +97,10 @@ public class BillingController {
     @PostMapping(value = "/{id}/cancel")
     public ResponseEntity<BillingResponse> cancel(
             @PathVariable Long id,
-            @RequestParam Long userId
+            @AuthenticationPrincipal JwtUtils.UserSession user
     ) {
         BillingResponse response = BillingResponse
-                .fromBillingResponse(billingService.cancel(id, userId));
+                .fromBillingResponse(billingService.cancel(id, user.id()));
 
         return ResponseEntity.ok(response);
     }

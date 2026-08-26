@@ -5,6 +5,7 @@ import be.technifutur.erp_finalproject.models.dto_request.PurchaseOrderRequest;
 import be.technifutur.erp_finalproject.models.dto_response.PurchaseOrderResponse;
 import be.technifutur.erp_finalproject.models.dto_response.PurchaseOrderSummaryResponse;
 import be.technifutur.erp_finalproject.services.purchaseorderservice.PurchaseOrderService;
+import be.technifutur.erp_finalproject.utils.JwtUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -12,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -50,9 +52,10 @@ public class PurchaseOrderController {
 
     @PostMapping
     public ResponseEntity<Void> create(
-            @Valid @RequestBody PurchaseOrderRequest request
-    ) {
-        Long id = purchaseOrderService.create(request.toForm());
+            @Valid @RequestBody PurchaseOrderRequest request,
+            @AuthenticationPrincipal JwtUtils.UserSession user
+            ) {
+        Long id = purchaseOrderService.create(request.toForm(user.id()));
 
         URI uri = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -66,10 +69,10 @@ public class PurchaseOrderController {
     @PostMapping("/{id}/receive")
     public ResponseEntity<PurchaseOrderResponse> receive(
             @PathVariable Long id,
-            @RequestParam Long userId
+            @AuthenticationPrincipal JwtUtils.UserSession user
     ) {
         PurchaseOrderResponse response = PurchaseOrderResponse
-                .fromPurchaseOrder(purchaseOrderService.receive(id, userId));
+                .fromPurchaseOrder(purchaseOrderService.receive(id, user.id()));
 
         return ResponseEntity.ok(response);
     }

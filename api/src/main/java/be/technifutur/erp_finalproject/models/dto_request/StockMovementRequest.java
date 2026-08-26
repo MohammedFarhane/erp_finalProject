@@ -15,12 +15,9 @@ public record StockMovementRequest (
 
         @NotNull
         @Positive
-        int quantity,
-
-        @NotNull
-        Long userId
+        int quantity
 ){
-    public StockMovementForm toForm() {
+    public StockMovementForm toForm(Long userId) {
         return new StockMovementForm(
 
                 productId,

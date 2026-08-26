@@ -8,11 +8,14 @@ import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 
 public record PaymentRequest(
-        @NotNull @Positive BigDecimal amount,
-        @NotNull PaymentMethod method,
-        @NotNull Long userId
+
+        @NotNull @Positive
+        BigDecimal amount,
+
+        @NotNull
+        PaymentMethod method
 ) {
-    public PaymentForm toForm() {
+    public PaymentForm toForm(Long userId) {
         return new PaymentForm(
                 amount,
                 method,

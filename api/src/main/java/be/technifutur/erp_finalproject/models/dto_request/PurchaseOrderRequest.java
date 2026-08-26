@@ -8,11 +8,14 @@ import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
 public record PurchaseOrderRequest(
-        @NotNull Long supplierId,
-        @NotNull Long userId,
-        @NotEmpty @Valid List<PurchaseOrderLineRequest> lines
+
+        @NotNull
+        Long supplierId,
+
+        @NotEmpty @Valid
+        List<PurchaseOrderLineRequest> lines
 ) {
-    public PurchaseOrderForm toForm() {
+    public PurchaseOrderForm toForm(Long userId) {
         return new PurchaseOrderForm(
                 supplierId,
                 userId,

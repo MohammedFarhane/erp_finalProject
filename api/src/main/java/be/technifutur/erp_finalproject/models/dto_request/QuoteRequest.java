@@ -11,12 +11,17 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public record QuoteRequest(
-        @NotNull Long clientId,
-        @NotNull Long userId,
-        @DecimalMin("0.00") @DecimalMax("100.00") BigDecimal discount,
-        @NotEmpty @Valid List<QuoteLineRequest> lines
+
+        @NotNull
+        Long clientId,
+
+        @DecimalMin("0.00") @DecimalMax("100.00")
+        BigDecimal discount,
+
+        @NotEmpty @Valid
+        List<QuoteLineRequest> lines
 ) {
-    public QuoteForm toForm() {
+    public QuoteForm toForm(Long userId) {
         return new QuoteForm(
                 clientId,
                 userId,

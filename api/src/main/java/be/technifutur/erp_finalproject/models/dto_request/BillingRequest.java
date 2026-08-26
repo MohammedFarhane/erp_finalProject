@@ -11,12 +11,17 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public record BillingRequest(
-        @NotNull Long clientId,
-        @NotNull Long userId,
-        @DecimalMin("0.00") @DecimalMax("100.00") BigDecimal discount,
-        @NotEmpty @Valid List<BillingLineRequest> lines
+
+        @NotNull
+        Long clientId,
+
+        @DecimalMin("0.00") @DecimalMax("100.00")
+        BigDecimal discount,
+
+        @NotEmpty @Valid
+        List<BillingLineRequest> lines
 ) {
-    public BillingForm toForm() {
+    public BillingForm toForm(Long userId) {
         return new BillingForm(
                 clientId,
                 userId,
