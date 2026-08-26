@@ -42,6 +42,10 @@ public class User implements UserDetails {
     @Setter
     private UserRole role;
 
+    @Column(nullable = false)
+    @Setter
+    private boolean archived;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "user_client",
@@ -57,6 +61,15 @@ public class User implements UserDetails {
         this.email = email;
         this.password = password;
         this.role = role;
+    }
+
+    public User(Long id, String name, String email, String password, UserRole role, boolean archived) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+        this.password = password;
+        this.role = role;
+        this.archived = archived;
     }
 
     @Override
