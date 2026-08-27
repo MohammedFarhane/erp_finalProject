@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title th:text="${order.reference}">Bon de commande</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm 1.8cm;
+        }
+
+        body {
+            font-family: Helvetica, sans-serif;
+            font-size: 10pt;
+            color: #2b2b2b;
+            margin: 0;
+        }
+
+        /* Troisieme couleur, orange : ce document sort de l'entreprise vers un fournisseur,
+           contrairement au devis et a la facture qui vont vers un client. */
+        .bandeau {
+            background-color: #a85416;
+            color: #ffffff;
+            padding: 14px 18px;
+            margin-bottom: 22px;
+        }
+
+        .bandeau .nom {
+            font-size: 19pt;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        .bandeau .contact {
+            font-size: 8.5pt;
+            color: #f0d9c6;
+            margin-top: 3px;
+        }
+
+        table.parties {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 22px;
+        }
+
+        table.parties td {
+            width: 50%;
+            vertical-align: top;
+            padding: 0;
+        }
+
+        .libelle {
+            font-size: 8pt;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #7a7a7a;
+            margin-bottom: 4px;
+        }
+
+        .bloc {
+            border-left: 3px solid #a85416;
+            padding-left: 9px;
+            line-height: 1.45;
+        }
+
+        .bloc .principal {
+            font-weight: bold;
+            font-size: 11pt;
+        }
+
+        h1 {
+            font-size: 16pt;
+            color: #a85416;
+            margin: 0 0 3px 0;
+        }
+
+        .meta {
+            font-size: 9pt;
+            color: #555555;
+            margin-bottom: 16px;
+        }
+
+        table.lignes {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 18px;
+        }
+
+        table.lignes thead th {
+            background-color: #a85416;
+            color: #ffffff;
+            font-size: 8.5pt;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 7px 8px;
+            text-align: left;
+        }
+
+        table.lignes tbody td {
+            padding: 7px 8px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        table.lignes tbody tr.paire td {
+            background-color: #fbf5f0;
+        }
+
+        .droite {
+            text-align: right;
+        }
+
+        table.totaux {
+            width: 46%;
+            border-collapse: collapse;
+            float: right;
+        }
+
+        table.totaux td {
+            padding: 5px 8px;
+        }
+
+        table.totaux tr.total td {
+            background-color: #a85416;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 11.5pt;
+        }
+
+        .pied {
+            clear: both;
+            margin-top: 45px;
+            padding-top: 9px;
+            border-top: 1px solid #d0d0d0;
+            font-size: 8pt;
+            color: #7a7a7a;
+            line-height: 1.5;
+        }
+
+        .etat {
+            display: inline-block;
+            padding: 2px 8px;
+            font-size: 8pt;
+            font-weight: bold;
+            color: #ffffff;
+            background-color: #7a7a7a;
+        }
+    </style>
+</head>
+<body>
+
+<div class="bandeau">
+    <div class="nom" th:text="${company.name}">Nom de la societe</div>
+    <div class="contact">
+        <span th:text="${company.address.street} + ' ' + ${company.address.number}">Rue</span> —
+        <span th:text="${company.address.postalCode} + ' ' + ${company.address.locality}">Ville</span> —
+        <span th:text="${company.phone}">Telephone</span> —
+        <span th:text="${company.email}">Email</span>
+    </div>
+</div>
+
+<table class="parties">
+    <tr>
+        <td>
+            <div class="libelle">Commande par</div>
+            <div class="bloc">
+                <div class="principal" th:text="${company.name}">Societe</div>
+                <div th:text="${company.address.street} + ' ' + ${company.address.number}">Rue</div>
+                <div th:text="${company.address.postalCode} + ' ' + ${company.address.locality}">Ville</div>
+                <div th:text="'TVA ' + ${company.tvaNumber}">TVA</div>
+            </div>
+        </td>
+        <td>
+            <div class="libelle">Fournisseur</div>
+            <div class="bloc">
+                <div class="principal" th:text="${order.supplier.name}">Fournisseur</div>
+                <div th:text="${order.supplier.address.street} + ' ' + ${order.supplier.address.number}">Rue</div>
+                <div th:text="${order.supplier.address.postalCode} + ' ' + ${order.supplier.address.locality}">Ville</div>
+                <div th:text="${order.supplier.email}">Email</div>
+                <div th:text="${order.supplier.phone}">Telephone</div>
+            </div>
+        </td>
+    </tr>
+</table>
+
+<h1 th:text="'Bon de commande ' + ${order.reference}">Bon de commande</h1>
+<div class="meta">
+    Date :
+    <span th:text="${#temporals.format(order.date, 'dd/MM/yyyy')}">01/01/2026</span>
+    &#160;&#160;
+    <span class="etat" th:text="${order.state}">ETAT</span>
+</div>
+
+<table class="lignes">
+    <thead>
+    <tr>
+        <th>Reference</th>
+        <th>Designation</th>
+        <th class="droite">Qte</th>
+        <th class="droite">Prix unitaire</th>
+        <th class="droite">Total</th>
+    </tr>
+    </thead>
+    <tbody>
+    <!-- Une ligne de commande fournisseur ne porte ni TVA ni remise :
+         seulement une quantite et un prix d'achat fige au tarif du jour. -->
+    <tr th:each="ligne, iter : ${lines}" th:classappend="${iter.even} ? 'paire' : ''">
+        <td th:text="${ligne.product.reference}">PRD-0000</td>
+        <td th:text="${ligne.product.name}">Produit</td>
+        <td class="droite" th:text="${ligne.quantity}">1</td>
+        <td class="droite" th:text="${#numbers.formatDecimal(ligne.unitPrice, 1, 'POINT', 2, 'COMMA')} + ' EUR'">0,00</td>
+        <td class="droite"
+            th:text="${#numbers.formatDecimal(ligne.totalLinePrice, 1, 'POINT', 2, 'COMMA')} + ' EUR'">0,00</td>
+    </tr>
+    </tbody>
+</table>
+
+<table class="totaux">
+    <tr class="total">
+        <td>Total commande</td>
+        <td class="droite" th:text="${#numbers.formatDecimal(order.totalPrice, 1, 'POINT', 2, 'COMMA')} + ' EUR'">0,00</td>
+    </tr>
+</table>
+
+<div class="pied">
+    <div th:text="${company.name} + ' — TVA ' + ${company.tvaNumber}">Mentions</div>
+    <div>Merci de mentionner la reference
+        <span th:text="${order.reference}">reference</span> sur votre facture et votre bon de livraison.
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title th:text="${billing.reference}">Facture</title>
+    <style>
+        /* Open HTML to PDF ne comprend que CSS 2.1 : pas de flexbox ni de grid.
+           La mise en page passe donc par des tableaux et du positionnement classique. */
+        @page {
+            size: A4;
+            margin: 1.5cm 1.8cm;
+        }
+
+        body {
+            font-family: Helvetica, sans-serif;
+            font-size: 10pt;
+            color: #2b2b2b;
+            margin: 0;
+        }
+
+        .bandeau {
+            background-color: #1f4e79;
+            color: #ffffff;
+            padding: 14px 18px;
+            margin-bottom: 22px;
+        }
+
+        .bandeau .nom {
+            font-size: 19pt;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        .bandeau .contact {
+            font-size: 8.5pt;
+            color: #c9dcef;
+            margin-top: 3px;
+        }
+
+        table.parties {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 22px;
+        }
+
+        table.parties td {
+            width: 50%;
+            vertical-align: top;
+            padding: 0;
+        }
+
+        .libelle {
+            font-size: 8pt;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #7a7a7a;
+            margin-bottom: 4px;
+        }
+
+        .bloc {
+            border-left: 3px solid #1f4e79;
+            padding-left: 9px;
+            line-height: 1.45;
+        }
+
+        .bloc .principal {
+            font-weight: bold;
+            font-size: 11pt;
+        }
+
+        h1 {
+            font-size: 16pt;
+            color: #1f4e79;
+            margin: 0 0 3px 0;
+        }
+
+        .meta {
+            font-size: 9pt;
+            color: #555555;
+            margin-bottom: 16px;
+        }
+
+        table.lignes {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 18px;
+        }
+
+        table.lignes thead th {
+            background-color: #1f4e79;
+            color: #ffffff;
+            font-size: 8.5pt;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 7px 8px;
+            text-align: left;
+        }
+
+        table.lignes tbody td {
+            padding: 7px 8px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        table.lignes tbody tr.paire td {
+            background-color: #f5f8fb;
+        }
+
+        .droite {
+            text-align: right;
+        }
+
+        table.totaux {
+            width: 46%;
+            border-collapse: collapse;
+            float: right;
+        }
+
+        table.totaux td {
+            padding: 5px 8px;
+        }
+
+        table.totaux td.intitule {
+            color: #555555;
+        }
+
+        table.totaux tr.total td {
+            background-color: #1f4e79;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 11.5pt;
+        }
+
+        table.totaux tr.solde td {
+            border-top: 1px solid #d0d0d0;
+            font-weight: bold;
+        }
+
+        .pied {
+            clear: both;
+            margin-top: 45px;
+            padding-top: 9px;
+            border-top: 1px solid #d0d0d0;
+            font-size: 8pt;
+            color: #7a7a7a;
+            line-height: 1.5;
+        }
+
+        .etat {
+            display: inline-block;
+            padding: 2px 8px;
+            font-size: 8pt;
+            font-weight: bold;
+            color: #ffffff;
+            background-color: #7a7a7a;
+        }
+    </style>
+</head>
+<body>
+
+<div class="bandeau">
+    <div class="nom" th:text="${company.name}">Nom de la societe</div>
+    <div class="contact">
+        <span th:text="${company.address.street} + ' ' + ${company.address.number}">Rue</span> —
+        <span th:text="${company.address.postalCode} + ' ' + ${company.address.locality}">Ville</span> —
+        <span th:text="${company.phone}">Telephone</span> —
+        <span th:text="${company.email}">Email</span>
+    </div>
+</div>
+
+<table class="parties">
+    <tr>
+        <td>
+            <div class="libelle">Emetteur</div>
+            <div class="bloc">
+                <div class="principal" th:text="${company.name}">Societe</div>
+                <div th:text="${company.address.street} + ' ' + ${company.address.number}">Rue</div>
+                <div th:text="${company.address.postalCode} + ' ' + ${company.address.locality}">Ville</div>
+                <div th:text="'TVA ' + ${company.tvaNumber}">TVA</div>
+            </div>
+        </td>
+        <td>
+            <div class="libelle">Facture a</div>
+            <div class="bloc">
+                <div class="principal" th:text="${billing.client.name}">Client</div>
+                <th:block th:with="adresse=${billing.client.billingAddress}">
+                    <div th:if="${adresse != null}" th:text="${adresse.street} + ' ' + ${adresse.number}">Rue</div>
+                    <div th:if="${adresse != null}" th:text="${adresse.postalCode} + ' ' + ${adresse.locality}">Ville</div>
+                </th:block>
+                <div th:text="${billing.client.email}">Email</div>
+                <div th:text="${billing.client.phone}">Telephone</div>
+            </div>
+        </td>
+    </tr>
+</table>
+
+<h1 th:text="'Facture ' + ${billing.reference}">Facture</h1>
+<div class="meta">
+    Date d'emission :
+    <span th:text="${#temporals.format(billing.billingDate, 'dd/MM/yyyy')}">01/01/2026</span>
+    &#160;&#160;
+    <span class="etat" th:text="${billing.state}">ETAT</span>
+</div>
+
+<table class="lignes">
+    <thead>
+    <tr>
+        <th>Designation</th>
+        <th class="droite">Qte</th>
+        <th class="droite">Prix unitaire</th>
+        <th class="droite">TVA</th>
+        <th class="droite">Total HTVA</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="ligne, iter : ${lines}" th:classappend="${iter.even} ? 'paire' : ''">
+        <td th:text="${ligne.product.name}">Produit</td>
+        <td class="droite" th:text="${ligne.quantity}">1</td>
+        <td class="droite" th:text="${#numbers.formatDecimal(ligne.unitPrice, 1, 'POINT', 2, 'COMMA')} + ' EUR'">0,00</td>
+        <td class="droite" th:text="${#numbers.formatDecimal(ligne.tvaRate * 100, 1, 0)} + ' %'">21 %</td>
+        <td class="droite" th:text="${#numbers.formatDecimal(ligne.totalLinePrice, 1, 'POINT', 2, 'COMMA')} + ' EUR'">0,00</td>
+    </tr>
+    </tbody>
+</table>
+
+<table class="totaux">
+    <tr>
+        <td class="intitule">Sous-total HTVA</td>
+        <td class="droite" th:text="${#numbers.formatDecimal(billing.subTotal, 1, 'POINT', 2, 'COMMA')} + ' EUR'">0,00</td>
+    </tr>
+    <tr th:if="${billing.discount != null and billing.discount.signum() > 0}">
+        <td class="intitule">Remise</td>
+        <td class="droite" th:text="'- ' + ${#numbers.formatDecimal(billing.discount, 1, 0)} + ' %'">0 %</td>
+    </tr>
+    <tr>
+        <td class="intitule">TVA</td>
+        <td class="droite" th:text="${#numbers.formatDecimal(billing.amountTva, 1, 'POINT', 2, 'COMMA')} + ' EUR'">0,00</td>
+    </tr>
+    <tr class="total">
+        <td>Total TVAC</td>
+        <td class="droite" th:text="${#numbers.formatDecimal(billing.totalPrice, 1, 'POINT', 2, 'COMMA')} + ' EUR'">0,00</td>
+    </tr>
+    <tr th:if="${paidAmount.signum() > 0}">
+        <td class="intitule">Deja paye</td>
+        <td class="droite" th:text="${#numbers.formatDecimal(paidAmount, 1, 'POINT', 2, 'COMMA')} + ' EUR'">0,00</td>
+    </tr>
+    <tr class="solde" th:if="${paidAmount.signum() > 0}">
+        <td>Solde du</td>
+        <td class="droite"
+            th:text="${#numbers.formatDecimal(billing.totalPrice.subtract(paidAmount), 1, 'POINT', 2, 'COMMA')} + ' EUR'">0,00</td>
+    </tr>
+</table>
+
+<div class="pied">
+    <div th:text="${company.name} + ' — TVA ' + ${company.tvaNumber} + ' — IBAN ' + ${company.iban}">Mentions</div>
+    <div>Paiement a effectuer sur le compte ci-dessus en mentionnant la reference
+        <span th:text="${billing.reference}">reference</span>.
+    </div>
+</div>
+
+</body>
+</html>

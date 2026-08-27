@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title th:text="${quote.reference}">Devis</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm 1.8cm;
+        }
+
+        body {
+            font-family: Helvetica, sans-serif;
+            font-size: 10pt;
+            color: #2b2b2b;
+            margin: 0;
+        }
+
+        /* Le devis se distingue de la facture par sa couleur : vert au lieu de bleu.
+           Un coup d'oeil suffit pour savoir quel document on a en main. */
+        .bandeau {
+            background-color: #1e6b4f;
+            color: #ffffff;
+            padding: 14px 18px;
+            margin-bottom: 22px;
+        }
+
+        .bandeau .nom {
+            font-size: 19pt;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        .bandeau .contact {
+            font-size: 8.5pt;
+            color: #c5e3d5;
+            margin-top: 3px;
+        }
+
+        table.parties {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 22px;
+        }
+
+        table.parties td {
+            width: 50%;
+            vertical-align: top;
+            padding: 0;
+        }
+
+        .libelle {
+            font-size: 8pt;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #7a7a7a;
+            margin-bottom: 4px;
+        }
+
+        .bloc {
+            border-left: 3px solid #1e6b4f;
+            padding-left: 9px;
+            line-height: 1.45;
+        }
+
+        .bloc .principal {
+            font-weight: bold;
+            font-size: 11pt;
+        }
+
+        h1 {
+            font-size: 16pt;
+            color: #1e6b4f;
+            margin: 0 0 3px 0;
+        }
+
+        .meta {
+            font-size: 9pt;
+            color: #555555;
+            margin-bottom: 16px;
+        }
+
+        .validite {
+            background-color: #eef7f2;
+            border-left: 3px solid #1e6b4f;
+            padding: 8px 10px;
+            margin-bottom: 16px;
+            font-size: 9pt;
+        }
+
+        table.lignes {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 18px;
+        }
+
+        table.lignes thead th {
+            background-color: #1e6b4f;
+            color: #ffffff;
+            font-size: 8.5pt;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 7px 8px;
+            text-align: left;
+        }
+
+        table.lignes tbody td {
+            padding: 7px 8px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        table.lignes tbody tr.paire td {
+            background-color: #f4faf7;
+        }
+
+        .droite {
+            text-align: right;
+        }
+
+        table.totaux {
+            width: 46%;
+            border-collapse: collapse;
+            float: right;
+        }
+
+        table.totaux td {
+            padding: 5px 8px;
+        }
+
+        table.totaux td.intitule {
+            color: #555555;
+        }
+
+        table.totaux tr.total td {
+            background-color: #1e6b4f;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 11.5pt;
+        }
+
+        .pied {
+            clear: both;
+            margin-top: 45px;
+            padding-top: 9px;
+            border-top: 1px solid #d0d0d0;
+            font-size: 8pt;
+            color: #7a7a7a;
+            line-height: 1.5;
+        }
+
+        .etat {
+            display: inline-block;
+            padding: 2px 8px;
+            font-size: 8pt;
+            font-weight: bold;
+            color: #ffffff;
+            background-color: #7a7a7a;
+        }
+    </style>
+</head>
+<body>
+
+<div class="bandeau">
+    <div class="nom" th:text="${company.name}">Nom de la societe</div>
+    <div class="contact">
+        <span th:text="${company.address.street} + ' ' + ${company.address.number}">Rue</span> —
+        <span th:text="${company.address.postalCode} + ' ' + ${company.address.locality}">Ville</span> —
+        <span th:text="${company.phone}">Telephone</span> —
+        <span th:text="${company.email}">Email</span>
+    </div>
+</div>
+
+<table class="parties">
+    <tr>
+        <td>
+            <div class="libelle">Emetteur</div>
+            <div class="bloc">
+                <div class="principal" th:text="${company.name}">Societe</div>
+                <div th:text="${company.address.street} + ' ' + ${company.address.number}">Rue</div>
+                <div th:text="${company.address.postalCode} + ' ' + ${company.address.locality}">Ville</div>
+                <div th:text="'TVA ' + ${company.tvaNumber}">TVA</div>
+            </div>
+        </td>
+        <td>
+            <div class="libelle">Destinataire</div>
+            <div class="bloc">
+                <div class="principal" th:text="${quote.client.name}">Client</div>
+                <th:block th:with="adresse=${quote.client.billingAddress}">
+                    <div th:if="${adresse != null}" th:text="${adresse.street} + ' ' + ${adresse.number}">Rue</div>
+                    <div th:if="${adresse != null}" th:text="${adresse.postalCode} + ' ' + ${adresse.locality}">Ville</div>
+                </th:block>
+                <div th:text="${quote.client.email}">Email</div>
+                <div th:text="${quote.client.phone}">Telephone</div>
+            </div>
+        </td>
+    </tr>
+</table>
+
+<h1 th:text="'Devis ' + ${quote.reference}">Devis</h1>
+<div class="meta">
+    Date d'emission :
+    <span th:text="${#temporals.format(quote.quoteDate, 'dd/MM/yyyy')}">01/01/2026</span>
+    &#160;&#160;
+    <span class="etat" th:text="${quote.state}">ETAT</span>
+</div>
+
+<div class="validite">
+    Offre valable jusqu'au
+    <strong th:text="${#temporals.format(quote.expirationDate, 'dd/MM/yyyy')}">01/02/2026</strong>.
+    Passe cette date, les prix indiques ne sont plus garantis.
+</div>
+
+<table class="lignes">
+    <thead>
+    <tr>
+        <th>Designation</th>
+        <th class="droite">Qte</th>
+        <th class="droite">Prix unitaire</th>
+        <th class="droite">TVA</th>
+        <th class="droite">Total HTVA</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="ligne, iter : ${lines}" th:classappend="${iter.even} ? 'paire' : ''">
+        <td th:text="${ligne.product.name}">Produit</td>
+        <td class="droite" th:text="${ligne.quantity}">1</td>
+        <td class="droite" th:text="${#numbers.formatDecimal(ligne.unitPrice, 1, 'POINT', 2, 'COMMA')} + ' EUR'">0,00</td>
+        <td class="droite" th:text="${#numbers.formatDecimal(ligne.tvaRate * 100, 1, 0)} + ' %'">21 %</td>
+        <td class="droite" th:text="${#numbers.formatDecimal(ligne.totalLinePrice, 1, 'POINT', 2, 'COMMA')} + ' EUR'">0,00</td>
+    </tr>
+    </tbody>
+</table>
+
+<table class="totaux">
+    <tr>
+        <td class="intitule">Sous-total HTVA</td>
+        <td class="droite" th:text="${#numbers.formatDecimal(quote.subTotal, 1, 'POINT', 2, 'COMMA')} + ' EUR'">0,00</td>
+    </tr>
+    <tr th:if="${quote.discount != null and quote.discount.signum() > 0}">
+        <td class="intitule">Remise</td>
+        <td class="droite" th:text="'- ' + ${#numbers.formatDecimal(quote.discount, 1, 0)} + ' %'">0 %</td>
+    </tr>
+    <tr>
+        <td class="intitule">TVA</td>
+        <td class="droite" th:text="${#numbers.formatDecimal(quote.amountTva, 1, 'POINT', 2, 'COMMA')} + ' EUR'">0,00</td>
+    </tr>
+    <tr class="total">
+        <td>Total TVAC</td>
+        <td class="droite" th:text="${#numbers.formatDecimal(quote.totalPrice, 1, 'POINT', 2, 'COMMA')} + ' EUR'">0,00</td>
+    </tr>
+</table>
+
+<div class="pied">
+    <div th:text="${company.name} + ' — TVA ' + ${company.tvaNumber} + ' — IBAN ' + ${company.iban}">Mentions</div>
+    <div>Ce document est un devis et ne constitue pas une demande de paiement.</div>
+</div>
+
+</body>
+</html>
