@@ -27,6 +27,7 @@ public class Initializer implements CommandLineRunner {
     private final StockMovementRepository stockMovementRepository;
     private final SupplierRepository supplierRepository;
     private final ClientRepository clientRepository;
+    private final CompanyRepository companyRepository;
     private final Clock clock;
     private final PasswordEncoder passwordEncoder;
 
@@ -92,6 +93,11 @@ public class Initializer implements CommandLineRunner {
                     AddressType.FACTURATION,
                     new Address("Avenue Louise", "500", "1050", "Bruxelles")));
             clientRepository.save(martin);
+
+            Company company = new Company("Group Farhane Construction", "BE0123456789", "BE01 0961 2345 6789",
+                    "facturation@farhane.construction.be", "04/263.65.98",
+                    new Address("Rue de la Construction", "12", "4000", "Liège"));
+            companyRepository.save(company);
         }
     }
 }

@@ -1,6 +1,6 @@
 # ERP — API REST
 
-API de gestion commerciale : catalogue produits, clients, fournisseurs, devis, factures, paiements, commandes fournisseur et suivi de stock. Projet de fin de formation développeur Java (Technifutur, Belgique).
+API de gestion commerciale : catalogue produits, clients, fournisseurs, devis, factures, paiements, commandes fournisseur, suivi de stock et génération de documents PDF. Projet de fin de formation développeur Java (Technifutur, Belgique).
 
 L'accent a été mis sur la cohérence des données métier — stock et paiements calculés depuis un journal plutôt que stockés, montants en `BigDecimal`, transitions d'état contrôlées côté service.
 
@@ -15,6 +15,7 @@ L'accent a été mis sur la cohérence des données métier — stock et paiemen
 | Spring Security | 7.1 (JWT via jjwt 0.13) |
 | Hibernate | 7.4 |
 | PostgreSQL | 18 |
+| PDF | Thymeleaf + Open HTML to PDF 1.1.83 |
 | Build | Maven multi-modules |
 
 ---
@@ -82,6 +83,35 @@ L'incrément passe par un `INSERT ... ON CONFLICT DO UPDATE ... RETURNING` — a
 
 ---
 
+## Documents PDF
+
+Devis, factures et bons de commande sont téléchargeables en PDF :
+
+```
+GET /quote/{id}/pdf
+GET /billing/{id}/pdf
+GET /purchase-order/{id}/pdf
+```
+
+Le document est **régénéré à chaque appel** plutôt que stocké : les montants étant figés en base, le rendu est toujours identique. Chaque fichier porte la référence de la pièce — `FAC-2026-00001.pdf`.
+
+Le rendu passe par un gabarit **Thymeleaf** converti en PDF par **Open HTML to PDF** : la mise en page est écrite en HTML/CSS, donc modifiable sans toucher au code Java. Une couleur par type de document — bleu pour la facture, vert pour le devis, orange pour la commande fournisseur — afin d'identifier la pièce d'un coup d'œil. Sur une commande fournisseur, les rôles s'inversent : l'entreprise est l'acheteuse et le fournisseur le destinataire.
+
+Deux contraintes du moteur de rendu, à connaître avant de modifier un gabarit : le HTML doit être **strictement bien formé** (toutes les balises fermées, `&#160;` et non `&nbsp;`), et seul **CSS 2.1** est supporté — ni Flexbox, ni Grid.
+
+### Les coordonnées de l'entreprise
+
+Elles figurent sur chaque document et proviennent d'une entité `Company` — raison sociale, adresse, numéro de TVA, IBAN, contacts. Il n'en existe qu'un seul enregistrement, d'où des routes sans identifiant :
+
+```
+GET /company     tout utilisateur authentifié
+PUT /company     ADMIN
+```
+
+Un déménagement ou un changement d'IBAN se fait donc par l'API, sans redéploiement.
+
+---
+
 ## Sécurité
 
 Authentification par jeton JWT, API sans état (`SessionCreationPolicy.STATELESS`).
@@ -94,6 +124,7 @@ Deux rôles, `ADMIN` et `EMPLOYEE` :
 |---|---|---|
 | Produits, catégories, fournisseurs | tous | `ADMIN` |
 | Clients, devis, factures, commandes, stock | tous | tous |
+| Coordonnées de l'entreprise | tous | `ADMIN` |
 | Utilisateurs | `ADMIN` | `ADMIN` |
 
 Un utilisateur change son propre mot de passe via `PUT /user/change-password` : aucun identifiant n'est accepté dans la requête, il provient du jeton.
@@ -182,6 +213,7 @@ Importer dans Postman, puis `Run collection`. **Redémarrer l'application avant 
 |---|---|
 | Authentification | `POST /auth/login` |
 | Utilisateurs | `/user` |
+| Entreprise | `/company` |
 | Catégories | `/category` |
 | Produits | `/product` |
 | Clients | `/client` |
@@ -192,3 +224,5 @@ Importer dans Postman, puis `Run collection`. **Redémarrer l'application avant 
 | Mouvements de stock | `/stock-movement` |
 
 Les listes sont paginées (`?page=0&size=10`) et filtrables ; les réponses suivent le format `PagedModel`.
+
+Les devis, factures et commandes fournisseur exposent en plus un `GET /{id}/pdf` qui renvoie le document en téléchargement.

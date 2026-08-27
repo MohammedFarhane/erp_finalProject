@@ -4,6 +4,8 @@ import be.technifutur.erp_finalproject.enums.QuoteState;
 import be.technifutur.erp_finalproject.models.dto_request.QuoteRequest;
 import be.technifutur.erp_finalproject.models.dto_response.QuoteResponse;
 import be.technifutur.erp_finalproject.models.dto_response.QuoteSummaryResponse;
+import be.technifutur.erp_finalproject.services.pdf.DocumentService;
+import be.technifutur.erp_finalproject.services.pdf.PdfDocument;
 import be.technifutur.erp_finalproject.services.quoteservice.QuoteService;
 import be.technifutur.erp_finalproject.utils.JwtUtils;
 import jakarta.validation.Valid;
@@ -12,6 +14,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.data.web.PagedModel;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +29,7 @@ import java.net.URI;
 public class QuoteController {
 
     private final QuoteService quoteService;
+    private final DocumentService documentService;
 
     @GetMapping
     public ResponseEntity<PagedModel<QuoteSummaryResponse>> search(
@@ -97,4 +102,16 @@ public class QuoteController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> pdf(
+            @PathVariable Long id
+    ) {
+        PdfDocument document = documentService.generateQuoteToPdf(id);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + document.fileName() + "\"")
+                .body(document.content());
+    }
 }

@@ -12,4 +12,5 @@ public final class Entities {
     public static final String QUOTE = "Le devis";
     public static final String SUPPLIER = "Le fournisseur";
     public static final String USER = "L'utilisateur";
+    public static final String COMPANY = "L'entreprise";
 }

@@ -39,4 +39,8 @@ public class PurchaseOrderLine {
         this.unitPrice = purchasePrice;
         this.product = product;
     }
+
+    public BigDecimal getTotalLinePrice() {
+        return unitPrice.multiply(BigDecimal.valueOf(quantity));
+    }
 }

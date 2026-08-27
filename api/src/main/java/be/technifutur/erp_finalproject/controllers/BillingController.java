@@ -6,6 +6,8 @@ import be.technifutur.erp_finalproject.models.dto_request.PaymentRequest;
 import be.technifutur.erp_finalproject.models.dto_response.BillingResponse;
 import be.technifutur.erp_finalproject.models.dto_response.BillingSummaryResponse;
 import be.technifutur.erp_finalproject.services.billingservice.BillingService;
+import be.technifutur.erp_finalproject.services.pdf.DocumentService;
+import be.technifutur.erp_finalproject.services.pdf.PdfDocument;
 import be.technifutur.erp_finalproject.utils.JwtUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +16,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.data.web.PagedModel;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +32,7 @@ import java.time.LocalDate;
 public class BillingController {
 
     private final BillingService billingService;
+    private final DocumentService documentService;
 
     @GetMapping
     public ResponseEntity<PagedModel<BillingSummaryResponse>> search(
@@ -103,5 +108,18 @@ public class BillingController {
                 .from(billingService.cancel(id, user.id()));
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> pdf(
+            @PathVariable Long id
+    ) {
+        PdfDocument document = documentService.generateBillingToPdf(id);
+
+       return ResponseEntity.ok()
+               .contentType(MediaType.APPLICATION_PDF)
+               .header(HttpHeaders.CONTENT_DISPOSITION,
+                       "attachment; filename=\"" + document.fileName() + "\"")
+               .body(document.content());
     }
 }
