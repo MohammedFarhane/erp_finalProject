@@ -2,6 +2,7 @@ package be.technifutur.erp_finalproject.services.quoteservice;
 
 import be.technifutur.erp_finalproject.ReferenceGenerator;
 import be.technifutur.erp_finalproject.SearchPattern;
+import be.technifutur.erp_finalproject.Totals;
 import be.technifutur.erp_finalproject.entities.*;
 import be.technifutur.erp_finalproject.enums.QuoteState;
 import be.technifutur.erp_finalproject.exceptions.Entities;
@@ -100,20 +101,7 @@ public class QuoteServiceImpl implements QuoteService{
                 .map(QuoteLine::getTvaAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal coeff = BigDecimal.ONE;
-        if (form.discount() != null && form.discount().compareTo(BigDecimal.ZERO) > 0) {
-            coeff = BigDecimal.ONE.subtract(
-                    form.discount().divide(new BigDecimal(100), 4, RoundingMode.HALF_UP));
-        }
-
-        BigDecimal amountTva = tvaBrute
-                .multiply(coeff)
-                .setScale(2, RoundingMode.HALF_UP);
-
-        BigDecimal totalPrice = subTotal
-                .multiply(coeff)
-                .add(amountTva)
-                .setScale(2, RoundingMode.HALF_UP);
+        Totals totals = Totals.of(subTotal, tvaBrute, form.discount());
 
         LocalDate quoteDate = LocalDate.now(clock);
         LocalDate expirationDate = quoteDate.plusDays(QUOTE_EXPIRATION_DAYS);
@@ -121,10 +109,10 @@ public class QuoteServiceImpl implements QuoteService{
         Quote quote = quoteRepository.save(new Quote(
                 referenceGenerator.next("DEV"),
                 quoteDate,
-                subTotal,
+                totals.subTotal(),
                 form.discount(),
-                amountTva,
-                totalPrice,
+                totals.amountTva(),
+                totals.totalPrice(),
                 expirationDate,
                 client,
                 user

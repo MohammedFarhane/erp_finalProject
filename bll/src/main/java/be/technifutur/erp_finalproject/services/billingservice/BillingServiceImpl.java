@@ -2,6 +2,7 @@ package be.technifutur.erp_finalproject.services.billingservice;
 
 import be.technifutur.erp_finalproject.ReferenceGenerator;
 import be.technifutur.erp_finalproject.SearchPattern;
+import be.technifutur.erp_finalproject.Totals;
 import be.technifutur.erp_finalproject.entities.*;
 import be.technifutur.erp_finalproject.enums.BillingState;
 import be.technifutur.erp_finalproject.exceptions.Entities;
@@ -123,28 +124,15 @@ public class BillingServiceImpl implements BillingService{
                 .map(BillingLine::getTvaAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal coeff = BigDecimal.ONE;
-        if (form.discount() != null && form.discount().compareTo(BigDecimal.ZERO) > 0) {
-            coeff = BigDecimal.ONE.subtract(
-                    form.discount().divide(new BigDecimal(100), 4, RoundingMode.HALF_UP));
-        }
-
-        BigDecimal amountTva = tvaBrute
-                .multiply(coeff)
-                .setScale(2, RoundingMode.HALF_UP);
-
-        BigDecimal totalPrice = subTotal
-                .multiply(coeff)
-                .add(amountTva)
-                .setScale(2, RoundingMode.HALF_UP);
+        Totals totals = Totals.of(subTotal, tvaBrute, form.discount());
 
         Billing billing = billingRepository.save(new Billing(
                 referenceGenerator.next("FAC"),
                 LocalDate.now(clock),
                 form.discount(),
-                subTotal,
-                amountTva,
-                totalPrice,
+                totals.subTotal(),
+                totals.amountTva(),
+                totals.totalPrice(),
                 user,
                 client
         ));
