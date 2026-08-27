@@ -1,13 +1,12 @@
 package be.technifutur.erp_finalproject.services.purchaseorderservice;
 
 import be.technifutur.erp_finalproject.ReferenceGenerator;
+import be.technifutur.erp_finalproject.SearchPattern;
 import be.technifutur.erp_finalproject.entities.*;
 import be.technifutur.erp_finalproject.enums.PurchaseOrderState;
-import be.technifutur.erp_finalproject.exceptions.product.ProductNotFoundException;
-import be.technifutur.erp_finalproject.exceptions.purchaseOrder.InvalidPurchaseOrderStateException;
-import be.technifutur.erp_finalproject.exceptions.purchaseOrder.PurchaseOrderNotFoundException;
-import be.technifutur.erp_finalproject.exceptions.supplier.SupplierNotFoundException;
-import be.technifutur.erp_finalproject.exceptions.user.UserNotFoundException;
+import be.technifutur.erp_finalproject.exceptions.Entities;
+import be.technifutur.erp_finalproject.exceptions.InvalidStateException;
+import be.technifutur.erp_finalproject.exceptions.NotFoundException;
 import be.technifutur.erp_finalproject.repositories.*;
 import be.technifutur.erp_finalproject.services.stockmovementservice.StockMovementService;
 import lombok.RequiredArgsConstructor;
@@ -38,13 +37,8 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     @Override
     public Page<PurchaseOrder> search(String reference, String supplierName, PurchaseOrderState state, Pageable pageable) {
 
-        String referencePattern = (reference == null || reference.isBlank())
-                ? null
-                : "%" + reference.toLowerCase() + "%";
-
-        String supplierPattern = (supplierName == null || supplierName.isBlank())
-                ? null
-                : "%" + supplierName.toLowerCase() + "%";
+        String referencePattern = SearchPattern.like(reference);
+        String supplierPattern = SearchPattern.like(supplierName);
 
         return purchaseOrderRepository.search(referencePattern, supplierPattern, state, pageable);
     }
@@ -52,7 +46,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     @Override
     public PurchaseOrderWithLines findById(Long id) {
         PurchaseOrder purchaseOrder = purchaseOrderRepository.findById(id)
-                .orElseThrow(() -> new PurchaseOrderNotFoundException(id));
+                .orElseThrow(() -> new NotFoundException(Entities.PURCHASE_ORDER, id));
 
         List<PurchaseOrderLine> lines = purchaseOrderLineRepository.findByPurchaseOrderId(id);
 
@@ -65,18 +59,18 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
 
         //charge le supplier
         Supplier supplier = supplierRepository.findByIdAndArchivedFalse(form.supplierId())
-                .orElseThrow(() -> new SupplierNotFoundException(form.supplierId()));
+                .orElseThrow(() -> new NotFoundException(Entities.SUPPLIER, form.supplierId()));
 
         //charge l'user
         User user = userRepository.findById(form.userId())
-                .orElseThrow(() -> new UserNotFoundException(form.userId()));
+                .orElseThrow(() -> new NotFoundException(Entities.USER, form.userId()));
 
         //charge les lignes de commande
         List<PurchaseOrderLine> lines = form.lines()
                 .stream()
                 .map(lineForm -> {
                     Product product = productRepository.findByIdAndArchivedFalse(lineForm.productId())
-                            .orElseThrow(() -> new ProductNotFoundException(lineForm.productId()));
+                            .orElseThrow(() -> new NotFoundException(Entities.PRODUCT, lineForm.productId()));
 
                     //le prix d'achat est recopié (garde le tarif du jour) même si le produit change de prix
                     return new PurchaseOrderLine(lineForm.quantity(), product.getPurchasePrice(), product);
@@ -111,14 +105,14 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     public PurchaseOrderWithLines receive(Long id, Long userId) {
 
         PurchaseOrder purchaseOrder = purchaseOrderRepository.findById(id)
-                .orElseThrow(() -> new PurchaseOrderNotFoundException(id));
+                .orElseThrow(() -> new NotFoundException(Entities.PURCHASE_ORDER, id));
 
         if (purchaseOrder.getState() != PurchaseOrderState.EN_ATTENTE) {
-            throw new InvalidPurchaseOrderStateException(purchaseOrder.getId(), purchaseOrder.getState());
+            throw new InvalidStateException(Entities.PURCHASE_ORDER, id, purchaseOrder.getState());
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+                .orElseThrow(() -> new NotFoundException(Entities.USER, id));
 
         List<PurchaseOrderLine> lines = purchaseOrderLineRepository.findByPurchaseOrderId(id);
 
@@ -134,10 +128,10 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     public PurchaseOrderWithLines cancel(Long id) {
 
         PurchaseOrder purchaseOrder = purchaseOrderRepository.findById(id)
-                .orElseThrow(() -> new PurchaseOrderNotFoundException(id));
+                .orElseThrow(() -> new NotFoundException(Entities.PURCHASE_ORDER, id));
 
         if (purchaseOrder.getState() != PurchaseOrderState.EN_ATTENTE){
-            throw  new InvalidPurchaseOrderStateException(purchaseOrder.getId(), purchaseOrder.getState());
+            throw  new InvalidStateException(Entities.PURCHASE_ORDER, id, purchaseOrder.getState());
         }
 
         purchaseOrder.setState(PurchaseOrderState.ANNULEE);

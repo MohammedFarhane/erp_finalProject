@@ -23,7 +23,7 @@ public record QuoteResponse(
         Long userId,
         List<QuoteLineResponse> lines
 ) {
-    public static QuoteResponse fromQuoteResponse(QuoteWithLines qwl){
+    public static QuoteResponse from(QuoteWithLines qwl){
         Quote quote = qwl.quote();
 
         return new QuoteResponse(
@@ -39,7 +39,7 @@ public record QuoteResponse(
                 quote.getBilling() == null ? null : quote.getBilling().getId(),
                 quote.getClient().getName(),
                 quote.getUser().getId(),
-                qwl.lines().stream().map(QuoteLineResponse::fromQuoteLine).toList()
+                qwl.lines().stream().map(QuoteLineResponse::from).toList()
         );
     }
 }

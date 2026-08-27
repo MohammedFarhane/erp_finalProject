@@ -9,13 +9,13 @@ public record SupplierResponse (
         String phone,
         AddressResponse address
 ){
-    public static SupplierResponse fromSupplier(Supplier supplier) {
+    public static SupplierResponse from(Supplier supplier) {
         return new SupplierResponse(
                 supplier.getId(),
                 supplier.getName(),
                 supplier.getEmail(),
                 supplier.getPhone(),
-                AddressResponse.fromAddress(supplier.getAddress())
+                AddressResponse.from(supplier.getAddress())
         );
     }
 }

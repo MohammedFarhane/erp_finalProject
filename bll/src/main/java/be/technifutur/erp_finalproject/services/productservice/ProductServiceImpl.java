@@ -1,10 +1,11 @@
 package be.technifutur.erp_finalproject.services.productservice;
 
 import be.technifutur.erp_finalproject.ReferenceGenerator;
+import be.technifutur.erp_finalproject.SearchPattern;
 import be.technifutur.erp_finalproject.entities.Category;
 import be.technifutur.erp_finalproject.entities.Product;
-import be.technifutur.erp_finalproject.exceptions.category.CategoryNotFoundException;
-import be.technifutur.erp_finalproject.exceptions.product.ProductNotFoundException;
+import be.technifutur.erp_finalproject.exceptions.Entities;
+import be.technifutur.erp_finalproject.exceptions.NotFoundException;
 import be.technifutur.erp_finalproject.projections.ProductStock;
 import be.technifutur.erp_finalproject.repositories.CategoryRepository;
 import be.technifutur.erp_finalproject.repositories.ProductRepository;
@@ -32,11 +33,9 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public Page<ProductWithStock> search(Long categoryId, String name, Pageable pageable) {
 
-        String pattern = (name == null || name.isBlank())
-                ? null
-                : "%" + name.toLowerCase() + "%";
+        String namePattern = SearchPattern.like(name);
 
-        Page<Product> page = productRepository.search(categoryId, pattern, pageable);
+        Page<Product> page = productRepository.search(categoryId, namePattern, pageable);
 
         List<Long> ids = page.getContent()
                 .stream()
@@ -62,7 +61,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductWithStock findById(Long id) {
         Product product = productRepository.findByIdAndArchivedFalse(id)
-                .orElseThrow(() -> new ProductNotFoundException(id));
+                .orElseThrow(() -> new NotFoundException(Entities.PRODUCT, id));
 
         return new ProductWithStock(product, stockMovementRepository.computeStockForProduct(id));
     }
@@ -72,7 +71,7 @@ public class ProductServiceImpl implements ProductService {
     public Long create(ProductForm form) {
 
         Category category = categoryRepository.findById(form.categoryId())
-                .orElseThrow(() -> new CategoryNotFoundException(form.categoryId()));
+                .orElseThrow(() -> new NotFoundException(Entities.CATEGORY, form.categoryId()));
 
         Product product = new Product(
                 referenceGenerator.next("PRD"),
@@ -92,10 +91,10 @@ public class ProductServiceImpl implements ProductService {
     public ProductWithStock update(Long id, ProductForm form) {
 
         Product product = productRepository.findByIdAndArchivedFalse(id)
-                .orElseThrow(() -> new ProductNotFoundException(id));
+                .orElseThrow(() -> new NotFoundException(Entities.PRODUCT, id));
 
         Category category = categoryRepository.findById(form.categoryId())
-                .orElseThrow(() -> new CategoryNotFoundException(form.categoryId()));
+                .orElseThrow(() -> new NotFoundException(Entities.CATEGORY, id));
 
         product.setName(form.name());
         product.setDescription(form.description());
@@ -113,7 +112,7 @@ public class ProductServiceImpl implements ProductService {
     public void delete(Long id) {
 
         Product product = productRepository.findByIdAndArchivedFalse(id)
-                .orElseThrow(() -> new ProductNotFoundException(id));
+                .orElseThrow(() -> new NotFoundException(Entities.PRODUCT, id));
 
         product.setArchived(true);
 

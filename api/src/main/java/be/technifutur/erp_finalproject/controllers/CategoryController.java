@@ -23,7 +23,7 @@ public class CategoryController {
     @GetMapping
     public ResponseEntity<List<CategoryResponse>> findAll() {
         List<CategoryResponse> responses = categoryService.findAll().stream()
-                .map(CategoryResponse::fromCategory)
+                .map(CategoryResponse::from)
                 .toList();
         return ResponseEntity.ok(responses);
     }
@@ -33,7 +33,7 @@ public class CategoryController {
             @PathVariable Long id
     ) {
         var category = categoryService.findById(id);
-        var response = CategoryResponse.fromCategory(category);
+        var response = CategoryResponse.from(category);
         return ResponseEntity.ok().body(response);
     }
 
@@ -60,7 +60,7 @@ public class CategoryController {
             @Valid @RequestBody CategoryRequest request
     ) {
         var category = categoryService.update(id, request.toCategory());
-        var response = CategoryResponse.fromCategory(category);
+        var response = CategoryResponse.from(category);
         return ResponseEntity.ok().body(response);
     }
 

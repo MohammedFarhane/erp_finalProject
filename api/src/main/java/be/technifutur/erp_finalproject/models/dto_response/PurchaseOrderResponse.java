@@ -17,7 +17,7 @@ public record PurchaseOrderResponse(
         SupplierResponse supplier,
         List<PurchaseOrderLineResponse> lines
 ) {
-    public static PurchaseOrderResponse fromPurchaseOrder(PurchaseOrderWithLines pwl) {
+    public static PurchaseOrderResponse from(PurchaseOrderWithLines pwl) {
         PurchaseOrder order = pwl.order();
         return new PurchaseOrderResponse(
             order.getId(),
@@ -25,7 +25,7 @@ public record PurchaseOrderResponse(
             order.getDate(),
             order.getState(),
             order.getTotalPrice(),
-            SupplierResponse.fromSupplier(order.getSupplier()),
+            SupplierResponse.from(order.getSupplier()),
             pwl.lines()
                     .stream()
                     .map(PurchaseOrderLineResponse::from)

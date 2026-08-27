@@ -23,7 +23,7 @@ public record BillingResponse(
         String clientName,
         List<BillingLineResponse> lines
 ) {
-    public static BillingResponse fromBillingResponse(BillingWithLines bwl) {
+    public static BillingResponse from(BillingWithLines bwl) {
         Billing billing = bwl.billing();
         BigDecimal paid = bwl.paidAmount().setScale(2, RoundingMode.HALF_UP);
         BigDecimal remaining = billing.getTotalPrice().subtract(paid);

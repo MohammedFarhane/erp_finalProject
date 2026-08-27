@@ -1,6 +1,6 @@
 package be.technifutur.erp_finalproject.models.dto_request;
 
-import be.technifutur.erp_finalproject.services.purchaseorderlineservice.PurchaseOrderLineForm;
+import be.technifutur.erp_finalproject.services.purchaseorderservice.PurchaseOrderLineForm;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 

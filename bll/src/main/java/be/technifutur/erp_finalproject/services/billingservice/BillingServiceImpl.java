@@ -1,14 +1,13 @@
 package be.technifutur.erp_finalproject.services.billingservice;
 
 import be.technifutur.erp_finalproject.ReferenceGenerator;
+import be.technifutur.erp_finalproject.SearchPattern;
 import be.technifutur.erp_finalproject.entities.*;
 import be.technifutur.erp_finalproject.enums.BillingState;
-import be.technifutur.erp_finalproject.exceptions.billing.BillingNotFoundException;
-import be.technifutur.erp_finalproject.exceptions.billing.InvalidBillingStateException;
+import be.technifutur.erp_finalproject.exceptions.Entities;
+import be.technifutur.erp_finalproject.exceptions.InvalidStateException;
+import be.technifutur.erp_finalproject.exceptions.NotFoundException;
 import be.technifutur.erp_finalproject.exceptions.billing.PaymentExceedsBalanceException;
-import be.technifutur.erp_finalproject.exceptions.client.ClientNotFoundException;
-import be.technifutur.erp_finalproject.exceptions.product.ProductNotFoundException;
-import be.technifutur.erp_finalproject.exceptions.user.UserNotFoundException;
 import be.technifutur.erp_finalproject.projections.BillingPaidAmount;
 import be.technifutur.erp_finalproject.repositories.*;
 import be.technifutur.erp_finalproject.services.stockmovementservice.StockMovementService;
@@ -42,17 +41,13 @@ public class BillingServiceImpl implements BillingService{
     private final Clock clock;
     private final StockMovementService stockMovementService;
 
+
     @Override
     public Page<BillingSummary> search(String reference, String clientName, BillingState state,
                                 LocalDate from, LocalDate to, Pageable pageable) {
 
-        String referencePattern = (reference == null || reference.isBlank())
-                ? null
-                : "%" + reference.toLowerCase() + "%";
-
-        String namePattern = (clientName == null || clientName.isBlank())
-                ? null
-                : "%" + clientName.toLowerCase() + "%";
+        String referencePattern = SearchPattern.like(reference);
+        String namePattern = SearchPattern.like(clientName);
 
         Page<Billing> page = billingRepository.search(referencePattern, namePattern, state, from, to, pageable);
 
@@ -77,7 +72,7 @@ public class BillingServiceImpl implements BillingService{
     @Override
     public BillingWithLines findById(Long id) {
         Billing billing = billingRepository.findById(id)
-                .orElseThrow(() -> new BillingNotFoundException(id));
+                .orElseThrow(() -> new NotFoundException(Entities.BILLING, id));
 
         List<BillingLine> lines = billingLineRepository.findByBillingId(id);
 
@@ -91,17 +86,17 @@ public class BillingServiceImpl implements BillingService{
     public Long create(BillingForm form) {
 
         Client client = clientRepository.findByIdAndArchivedFalse(form.clientId())
-                .orElseThrow(() -> new ClientNotFoundException(form.clientId()));
+                .orElseThrow(() -> new NotFoundException(Entities.CLIENT, form.clientId()));
 
         User user = userRepository.findById(form.userId())
-                .orElseThrow(() -> new UserNotFoundException(form.userId()));
+                .orElseThrow(() -> new NotFoundException(Entities.USER, form.userId()));
 
         List<BillingLine> lines = new ArrayList<>();
 
         for (BillingLineForm lineForm : form.lines()) {
 
             Product product = productRepository.findByIdAndArchivedFalse(lineForm.productId())
-                    .orElseThrow(() -> new ProductNotFoundException(lineForm.productId()));
+                    .orElseThrow(() -> new NotFoundException(Entities.PRODUCT, lineForm.productId()));
 
             BigDecimal unitPrice = product.getSellingPrice();
 
@@ -165,14 +160,14 @@ public class BillingServiceImpl implements BillingService{
     public BillingWithLines validate(Long id, Long userId) {
 
         Billing billing = billingRepository.findById(id)
-                .orElseThrow(() -> new BillingNotFoundException(id));
+                .orElseThrow(() -> new NotFoundException(Entities.BILLING, id));
 
         if (billing.getState() != BillingState.BROUILLON) {
-            throw new InvalidBillingStateException(id, billing.getState());
+            throw new InvalidStateException(Entities.BILLING, id, billing.getState());
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+                .orElseThrow(() -> new NotFoundException(Entities.USER, id));
 
         List<BillingLine> lines = billingLineRepository.findByBillingId(id);
 
@@ -188,14 +183,14 @@ public class BillingServiceImpl implements BillingService{
     public BillingWithLines pay(Long id, PaymentForm form) {
 
         Billing billing = billingRepository.findById(id)
-                .orElseThrow(() -> new BillingNotFoundException(id));
+                .orElseThrow(() -> new NotFoundException(Entities.BILLING, id));
 
         if (billing.getState() != BillingState.VALIDEE) {
-            throw new InvalidBillingStateException(id, billing.getState());
+            throw new InvalidStateException(Entities.BILLING, id, billing.getState());
         }
 
         User user = userRepository.findById(form.userId())
-                .orElseThrow(() -> new UserNotFoundException(form.userId()));
+                .orElseThrow(() -> new NotFoundException(Entities.USER, id));
 
         BigDecimal alreadyPaid = paymentRepository.computeAmountForBilling(id);
         BigDecimal afterPayment = alreadyPaid.add(form.amount());
@@ -222,17 +217,17 @@ public class BillingServiceImpl implements BillingService{
     public BillingWithLines cancel(Long id, Long userId) {
 
         Billing billing = billingRepository.findById(id)
-                .orElseThrow(() -> new BillingNotFoundException(id));
+                .orElseThrow(() -> new NotFoundException(Entities.BILLING, id));
 
         if (billing.getState() == BillingState.PAYEE || billing.getState() == BillingState.ANNULEE) {
-            throw new InvalidBillingStateException(id, billing.getState());
+            throw new InvalidStateException(Entities.BILLING, id, billing.getState());
         }
 
         List<BillingLine> lines = billingLineRepository.findByBillingId(id);
 
         if (billing.getState() == BillingState.VALIDEE) {
             User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new UserNotFoundException(userId));
+                    .orElseThrow(() -> new NotFoundException(Entities.USER, id));
 
             stockMovementService.recordReturn(billing, lines, user);
         }

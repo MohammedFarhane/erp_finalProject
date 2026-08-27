@@ -2,8 +2,8 @@ package be.technifutur.erp_finalproject.services.stockmovementservice;
 
 import be.technifutur.erp_finalproject.entities.*;
 import be.technifutur.erp_finalproject.enums.MovementType;
-import be.technifutur.erp_finalproject.exceptions.user.UserNotFoundException;
-import be.technifutur.erp_finalproject.exceptions.product.ProductNotFoundException;
+import be.technifutur.erp_finalproject.exceptions.Entities;
+import be.technifutur.erp_finalproject.exceptions.NotFoundException;
 import be.technifutur.erp_finalproject.exceptions.stockmovement.InsufficientStockException;
 import be.technifutur.erp_finalproject.repositories.ProductRepository;
 import be.technifutur.erp_finalproject.repositories.StockMovementRepository;
@@ -34,10 +34,10 @@ public class StockMovementServiceImpl implements StockMovementService {
     @Transactional
     public Long record(StockMovementForm form) {
         Product product = productRepository.findByIdAndArchivedFalse(form.productId())
-                .orElseThrow(() -> new ProductNotFoundException(form.productId()));
+                .orElseThrow(() -> new NotFoundException(Entities.PRODUCT, form.productId()));
 
         User user = userRepository.findById(form.userId())
-                .orElseThrow(() -> new UserNotFoundException(form.userId()));
+                .orElseThrow(() -> new NotFoundException(Entities.USER, form.userId()));
 
         if (form.type() == MovementType.SORTIE) {
             int stock = stockMovementRepository.computeStockForProduct(form.productId());

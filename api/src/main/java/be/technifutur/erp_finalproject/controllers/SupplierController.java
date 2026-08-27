@@ -30,7 +30,7 @@ public class SupplierController {
             @PageableDefault(size = 10) Pageable pageable
     ) {
         Page<SupplierResponse> page = supplierService.search(name, email, pageable)
-                .map(SupplierResponse::fromSupplier);
+                .map(SupplierResponse::from);
 
         return ResponseEntity.ok(new PagedModel<>(page));
     }
@@ -39,7 +39,7 @@ public class SupplierController {
     public ResponseEntity<SupplierResponse> findById(
             @PathVariable Long id
     ) {
-        SupplierResponse response = SupplierResponse.fromSupplier(supplierService.findById(id));
+        SupplierResponse response = SupplierResponse.from(supplierService.findById(id));
 
         return ResponseEntity.ok().body(response);
     }
@@ -66,7 +66,7 @@ public class SupplierController {
             @PathVariable Long id,
             @Valid @RequestBody SupplierRequest request
     ) {
-        SupplierResponse response = SupplierResponse.fromSupplier(supplierService.update(id, request.toForm()));
+        SupplierResponse response = SupplierResponse.from(supplierService.update(id, request.toForm()));
 
         return ResponseEntity.ok().body(response);
     }

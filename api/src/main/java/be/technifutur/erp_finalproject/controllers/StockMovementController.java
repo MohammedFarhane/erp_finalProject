@@ -30,7 +30,7 @@ public class StockMovementController {
             @PageableDefault(size = 10) Pageable pageable
     ) {
         Page<StockMovementResponse> page = stockMovementService.history(productId, pageable)
-                .map(StockMovementResponse::form);
+                .map(StockMovementResponse::from);
 
         return ResponseEntity.ok(new PagedModel<>(page));
     }

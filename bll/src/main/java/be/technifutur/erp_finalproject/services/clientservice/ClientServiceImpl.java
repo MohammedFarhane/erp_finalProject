@@ -1,10 +1,12 @@
 package be.technifutur.erp_finalproject.services.clientservice;
 
+import be.technifutur.erp_finalproject.SearchPattern;
 import be.technifutur.erp_finalproject.entities.Client;
 import be.technifutur.erp_finalproject.entities.TypeAddress;
 import be.technifutur.erp_finalproject.enums.AddressType;
-import be.technifutur.erp_finalproject.exceptions.client.ClientAlreadyExistsException;
-import be.technifutur.erp_finalproject.exceptions.client.ClientNotFoundException;
+import be.technifutur.erp_finalproject.exceptions.EmailAlreadyUsedException;
+import be.technifutur.erp_finalproject.exceptions.Entities;
+import be.technifutur.erp_finalproject.exceptions.NotFoundException;
 import be.technifutur.erp_finalproject.exceptions.client.InvalidClientAddressesException;
 import be.technifutur.erp_finalproject.repositories.ClientRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.Set;
 
 @Service
@@ -25,13 +28,8 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public Page<Client> search(String name, String email, Pageable pageable) {
 
-        String namePattern = (name == null || name.isBlank())
-                ? null
-                : "%" + name.toLowerCase() + "%";
-
-        String emailPattern = (email == null || email.isBlank())
-                ? null
-                : "%" + email.toLowerCase() + "%";
+        String namePattern = SearchPattern.like(name);
+        String emailPattern = SearchPattern.like(email);
 
         return clientRepository.search(namePattern, emailPattern, pageable);
     }
@@ -40,7 +38,7 @@ public class ClientServiceImpl implements ClientService {
     public Client findById(Long id) {
 
         return clientRepository.findByIdAndArchivedFalse(id)
-                .orElseThrow(() -> new ClientNotFoundException(id));
+                .orElseThrow(() -> new NotFoundException(Entities.CLIENT, id));
     }
 
     @Override
@@ -48,7 +46,7 @@ public class ClientServiceImpl implements ClientService {
     public Long create(ClientForm form) {
 
         if (clientRepository.existsByEmail(form.email())){
-            throw new ClientAlreadyExistsException(form.email());
+            throw new EmailAlreadyUsedException(form.email());
         }
 
         Client client = new Client(
@@ -67,10 +65,10 @@ public class ClientServiceImpl implements ClientService {
     public Client update(Long id, ClientForm form) {
 
         Client client = clientRepository.findByIdAndArchivedFalse(id)
-                .orElseThrow(() -> new ClientNotFoundException(id));
+                .orElseThrow(() -> new NotFoundException(Entities.CLIENT, id));
 
         if (!client.getEmail().equals(form.email()) && clientRepository.existsByEmail(form.email())){
-            throw new ClientAlreadyExistsException(form.email());
+            throw new EmailAlreadyUsedException(form.email());
         }
 
         client.setName(form.name());
@@ -85,7 +83,7 @@ public class ClientServiceImpl implements ClientService {
     public void delete(Long id) {
 
         Client client = clientRepository.findByIdAndArchivedFalse(id)
-                .orElseThrow(() -> new ClientNotFoundException(id));
+                .orElseThrow(() -> new NotFoundException(Entities.CLIENT, id));
 
         client.setArchived(true);
 
@@ -97,15 +95,11 @@ public class ClientServiceImpl implements ClientService {
     public Client addAddress(Long clientId, TypeAddress address) {
 
         Client client = clientRepository.findByIdAndArchivedFalse(clientId)
-                .orElseThrow(() -> new ClientNotFoundException(clientId));
+                .orElseThrow(() -> new NotFoundException(Entities.CLIENT, clientId));
 
-        boolean hasBillingAddress = client.getAddresses()
-                .stream()
-                .anyMatch(a -> a.getType() == AddressType.FACTURATION);
-
-        if (AddressType.FACTURATION == address.getType() && hasBillingAddress) {
-            throw InvalidClientAddressesException.multipleBilling(clientId);
-        }
+        Set<TypeAddress> result = new HashSet<>(client.getAddresses());
+        result.add(address);
+        validateAddresses(result, clientId);
 
         client.getAddresses().add(address);
 
@@ -117,9 +111,20 @@ public class ClientServiceImpl implements ClientService {
     public Client replaceAddress(Long clientId, Set<TypeAddress> addresses) {
 
         Client client = clientRepository.findByIdAndArchivedFalse(clientId)
-                .orElseThrow(() -> new ClientNotFoundException(clientId));
+                .orElseThrow(() -> new NotFoundException(Entities.CLIENT, clientId));
 
-        long billingCount = addresses.stream()
+        validateAddresses(addresses, clientId);
+
+        client.getAddresses().clear();
+        client.getAddresses().addAll(addresses);
+
+        return clientRepository.save(client);
+    }
+
+    private void validateAddresses(Set<TypeAddress> addresses, Long clientId) {
+
+        long billingCount = addresses
+                .stream()
                 .filter(a -> a.getType() == AddressType.FACTURATION)
                 .count();
 
@@ -127,16 +132,12 @@ public class ClientServiceImpl implements ClientService {
             throw InvalidClientAddressesException.multipleBilling(clientId);
         }
 
-        boolean hasDelivery = addresses.stream()
-                        .anyMatch(a -> a.getType() == AddressType.LIVRAISON);
+        boolean hasDelivery = addresses
+                .stream()
+                .anyMatch(a -> a.getType() == AddressType.LIVRAISON);
 
         if (!hasDelivery) {
             throw InvalidClientAddressesException.missingDelivery(clientId);
         }
-
-        client.getAddresses().clear();
-        client.getAddresses().addAll(addresses);
-
-        return clientRepository.save(client);
     }
 }

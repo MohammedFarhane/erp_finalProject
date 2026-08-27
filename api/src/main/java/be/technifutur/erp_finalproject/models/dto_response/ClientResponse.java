@@ -13,7 +13,7 @@ public record ClientResponse(
         Set<TypeAddressResponse> addresses,
         AddressResponse billingAddress
 ) {
-    public static ClientResponse fromClient (Client client) {
+    public static ClientResponse from(Client client) {
         return new ClientResponse(
                 client.getId(),
                 client.getName(),
@@ -21,8 +21,8 @@ public record ClientResponse(
                 client.getPhone(),
                 client.getAddresses()
                         .stream()
-                        .map(TypeAddressResponse::fromTypeAddress)
+                        .map(TypeAddressResponse::from)
                         .collect(Collectors.toSet()),
-                AddressResponse.fromAddress(client.getBillingAddress()));
+                AddressResponse.from(client.getBillingAddress()));
     }
 }

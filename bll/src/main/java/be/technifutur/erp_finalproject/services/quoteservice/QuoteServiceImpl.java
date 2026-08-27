@@ -1,14 +1,13 @@
 package be.technifutur.erp_finalproject.services.quoteservice;
 
 import be.technifutur.erp_finalproject.ReferenceGenerator;
+import be.technifutur.erp_finalproject.SearchPattern;
 import be.technifutur.erp_finalproject.entities.*;
 import be.technifutur.erp_finalproject.enums.QuoteState;
-import be.technifutur.erp_finalproject.exceptions.client.ClientNotFoundException;
-import be.technifutur.erp_finalproject.exceptions.product.ProductNotFoundException;
-import be.technifutur.erp_finalproject.exceptions.quote.InvalideQuoteStateException;
+import be.technifutur.erp_finalproject.exceptions.Entities;
+import be.technifutur.erp_finalproject.exceptions.InvalidStateException;
+import be.technifutur.erp_finalproject.exceptions.NotFoundException;
 import be.technifutur.erp_finalproject.exceptions.quote.QuoteExpiredException;
-import be.technifutur.erp_finalproject.exceptions.quote.QuoteNotFoundException;
-import be.technifutur.erp_finalproject.exceptions.user.UserNotFoundException;
 import be.technifutur.erp_finalproject.repositories.*;
 import be.technifutur.erp_finalproject.services.billingservice.BillingService;
 import lombok.RequiredArgsConstructor;
@@ -43,13 +42,8 @@ public class QuoteServiceImpl implements QuoteService{
     @Override
     public Page<Quote> search(String reference, String clientName, QuoteState state, Pageable pageable) {
 
-        String referencePattern = (reference == null || reference.isBlank())
-                ? null
-                : "%" + reference.toLowerCase() + "%";
-
-        String namePattern = (clientName == null || clientName.isBlank())
-                ? null
-                : "%" + clientName.toLowerCase() + "%";
+        String referencePattern = SearchPattern.like(reference);
+        String namePattern = SearchPattern.like(clientName);
 
         return quoteRepository.search(referencePattern, namePattern, state, pageable);
     }
@@ -57,7 +51,7 @@ public class QuoteServiceImpl implements QuoteService{
     @Override
     public QuoteWithLines findById(Long id) {
         Quote quote = quoteRepository.findById(id)
-                .orElseThrow(() -> new QuoteNotFoundException(id));
+                .orElseThrow(() -> new NotFoundException(Entities.QUOTE, id));
 
         List<QuoteLine> lines = quoteLineRepository.findByQuoteId(id);
 
@@ -69,17 +63,17 @@ public class QuoteServiceImpl implements QuoteService{
     public Long create(QuoteForm form) {
 
         Client client = clientRepository.findByIdAndArchivedFalse(form.clientId())
-                .orElseThrow(() -> new ClientNotFoundException(form.clientId()));
+                .orElseThrow(() -> new NotFoundException(Entities.CLIENT, form.clientId()));
 
         User user = userRepository.findById(form.userId())
-                .orElseThrow(() -> new UserNotFoundException(form.userId()));
+                .orElseThrow(() -> new NotFoundException(Entities.USER, form.userId()));
 
         List<QuoteLine> lines = new ArrayList<>();
 
         for (QuoteLineForm lineForm : form.lines()) {
 
             Product product = productRepository.findByIdAndArchivedFalse(lineForm.productId())
-                    .orElseThrow(() -> new ProductNotFoundException(lineForm.productId()));
+                    .orElseThrow(() -> new NotFoundException(Entities.PRODUCT, lineForm.productId()));
 
             BigDecimal unitPrice = product.getSellingPrice();
 
@@ -147,10 +141,10 @@ public class QuoteServiceImpl implements QuoteService{
     public QuoteWithLines send(Long id) {
 
         Quote quote = quoteRepository.findById(id)
-                .orElseThrow(() -> new QuoteNotFoundException(id));
+                .orElseThrow(() -> new NotFoundException(Entities.QUOTE, id));
 
         if (quote.getState() != QuoteState.BROUILLON) {
-            throw new InvalideQuoteStateException(id, quote.getState());
+            throw new InvalidStateException(Entities.QUOTE, id, quote.getState());
         }
 
         quote.setState(QuoteState.ENVOYE);
@@ -165,10 +159,10 @@ public class QuoteServiceImpl implements QuoteService{
     public QuoteWithLines accept(Long id, Long userId) {
 
         Quote quote = quoteRepository.findById(id)
-                .orElseThrow(() -> new QuoteNotFoundException(id));
+                .orElseThrow(() -> new NotFoundException(Entities.QUOTE, id));
 
         if (quote.getState() != QuoteState.ENVOYE) {
-            throw new InvalideQuoteStateException(id, quote.getState());
+            throw new InvalidStateException(Entities.QUOTE, id, quote.getState());
         }
 
         if (quote.getExpirationDate().isBefore(LocalDate.now(clock))) {
@@ -176,7 +170,7 @@ public class QuoteServiceImpl implements QuoteService{
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+                .orElseThrow(() -> new NotFoundException(Entities.USER, id));
 
         List<QuoteLine> lines = quoteLineRepository.findByQuoteId(id);
 
@@ -194,10 +188,10 @@ public class QuoteServiceImpl implements QuoteService{
     public QuoteWithLines refuse(Long id) {
 
         Quote quote = quoteRepository.findById(id)
-                .orElseThrow(() -> new QuoteNotFoundException(id));
+                .orElseThrow(() -> new NotFoundException(Entities.QUOTE, id));
 
         if (quote.getState() != QuoteState.ENVOYE) {
-            throw new InvalideQuoteStateException(id, quote.getState());
+            throw new InvalidStateException(Entities.QUOTE, id, quote.getState());
         }
 
         quote.setState(QuoteState.REFUSE);

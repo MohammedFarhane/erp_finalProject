@@ -1,8 +1,9 @@
 package be.technifutur.erp_finalproject.exceptions;
 
-public abstract class NotFoundException extends RuntimeException {
+public class NotFoundException extends RuntimeException {
 
-    protected NotFoundException(String message) {
-        super(message);
+    public NotFoundException(String entity, Long id) {
+
+        super(entity + " " + id + " n'existe pas");
     }
 }

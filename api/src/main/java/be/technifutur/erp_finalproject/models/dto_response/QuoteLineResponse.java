@@ -13,7 +13,7 @@ public record QuoteLineResponse(
         BigDecimal totalLinePrice,
         String productName
 ) {
-    public static QuoteLineResponse fromQuoteLine(QuoteLine line) {
+    public static QuoteLineResponse from(QuoteLine line) {
         return new QuoteLineResponse(
                 line.getId(),
                 line.getQuantity(),

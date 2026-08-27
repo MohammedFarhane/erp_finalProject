@@ -8,7 +8,7 @@ public record AddressResponse(
         String postalCode,
         String locality
 ) {
-    public static AddressResponse fromAddress(Address address) {
+    public static AddressResponse from(Address address) {
 
         if (address == null) return null;
 

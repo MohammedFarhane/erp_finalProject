@@ -45,7 +45,7 @@ public class PurchaseOrderController {
             @PathVariable Long id
     ) {
         PurchaseOrderResponse response = PurchaseOrderResponse
-                .fromPurchaseOrder(purchaseOrderService.findById(id));
+                .from(purchaseOrderService.findById(id));
 
         return ResponseEntity.ok().body(response);
     }
@@ -72,7 +72,7 @@ public class PurchaseOrderController {
             @AuthenticationPrincipal JwtUtils.UserSession user
     ) {
         PurchaseOrderResponse response = PurchaseOrderResponse
-                .fromPurchaseOrder(purchaseOrderService.receive(id, user.id()));
+                .from(purchaseOrderService.receive(id, user.id()));
 
         return ResponseEntity.ok(response);
     }
@@ -82,7 +82,7 @@ public class PurchaseOrderController {
             @PathVariable Long id
     ) {
         PurchaseOrderResponse response = PurchaseOrderResponse
-                .fromPurchaseOrder(purchaseOrderService.cancel(id));
+                .from(purchaseOrderService.cancel(id));
 
         return ResponseEntity.ok(response);
     }

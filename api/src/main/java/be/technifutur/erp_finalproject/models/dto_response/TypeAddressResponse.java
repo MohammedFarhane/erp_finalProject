@@ -7,10 +7,10 @@ public record TypeAddressResponse(
         AddressType type,
         AddressResponse address
 ) {
-    public static TypeAddressResponse fromTypeAddress(TypeAddress typeAddress) {
+    public static TypeAddressResponse from(TypeAddress typeAddress) {
         return new TypeAddressResponse(
                 typeAddress.getType(),
-                AddressResponse.fromAddress(typeAddress.getAddress())
+                AddressResponse.from(typeAddress.getAddress())
         );
     }
 }

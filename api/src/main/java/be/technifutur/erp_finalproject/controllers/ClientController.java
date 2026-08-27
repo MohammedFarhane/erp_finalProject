@@ -35,7 +35,7 @@ public class ClientController {
             @PageableDefault(size = 10) Pageable pageable
     ) {
         Page<ClientResponse> page = clientService.search(name, email, pageable)
-                .map(ClientResponse::fromClient);
+                .map(ClientResponse::from);
 
         return ResponseEntity.ok(new PagedModel<>(page));
     }
@@ -44,7 +44,7 @@ public class ClientController {
     public ResponseEntity<ClientResponse> findById(
             @PathVariable Long id
     ) {
-        ClientResponse response = ClientResponse.fromClient(clientService.findById(id));
+        ClientResponse response = ClientResponse.from(clientService.findById(id));
 
         return ResponseEntity.ok().body(response);
     }
@@ -69,7 +69,7 @@ public class ClientController {
             @PathVariable Long id,
             @Valid @RequestBody ClientRequest request
     ) {
-        ClientResponse response = ClientResponse.fromClient(clientService.update(id, request.toForm()));
+        ClientResponse response = ClientResponse.from(clientService.update(id, request.toForm()));
 
         return ResponseEntity.ok().body(response);
     }
@@ -90,7 +90,7 @@ public class ClientController {
     ) {
         Client client = clientService.addAddress(id, request.toTypeAddress());
 
-        return ResponseEntity.ok().body(ClientResponse.fromClient(client));
+        return ResponseEntity.ok().body(ClientResponse.from(client));
     }
 
     @PutMapping("/{id}/addresses")
@@ -105,6 +105,6 @@ public class ClientController {
 
         Client client = clientService.replaceAddress(id, addresses);
 
-        return ResponseEntity.ok().body(ClientResponse.fromClient(client));
+        return ResponseEntity.ok().body(ClientResponse.from(client));
     }
 }

@@ -50,7 +50,7 @@ public class BillingController {
             @PathVariable Long id
     ) {
         BillingResponse response = BillingResponse
-                .fromBillingResponse(billingService.findById(id));
+                .from(billingService.findById(id));
 
         return ResponseEntity.ok().body(response);
     }
@@ -77,7 +77,7 @@ public class BillingController {
             @AuthenticationPrincipal JwtUtils.UserSession user
     ) {
         BillingResponse response = BillingResponse
-                .fromBillingResponse(billingService.validate(id, user.id()));
+                .from(billingService.validate(id, user.id()));
 
         return ResponseEntity.ok(response);
     }
@@ -89,7 +89,7 @@ public class BillingController {
             @AuthenticationPrincipal JwtUtils.UserSession user
     ) {
         BillingResponse response = BillingResponse
-                .fromBillingResponse(billingService.pay(id, request.toForm(user.id())));
+                .from(billingService.pay(id, request.toForm(user.id())));
 
         return ResponseEntity.ok(response);
     }
@@ -100,7 +100,7 @@ public class BillingController {
             @AuthenticationPrincipal JwtUtils.UserSession user
     ) {
         BillingResponse response = BillingResponse
-                .fromBillingResponse(billingService.cancel(id, user.id()));
+                .from(billingService.cancel(id, user.id()));
 
         return ResponseEntity.ok(response);
     }

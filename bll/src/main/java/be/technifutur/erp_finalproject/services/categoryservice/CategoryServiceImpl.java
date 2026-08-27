@@ -1,9 +1,10 @@
 package be.technifutur.erp_finalproject.services.categoryservice;
 
 import be.technifutur.erp_finalproject.entities.Category;
+import be.technifutur.erp_finalproject.exceptions.Entities;
+import be.technifutur.erp_finalproject.exceptions.NotFoundException;
 import be.technifutur.erp_finalproject.exceptions.category.CategoryAlreadyExistsException;
 import be.technifutur.erp_finalproject.exceptions.category.CategoryNotEmptyException;
-import be.technifutur.erp_finalproject.exceptions.category.CategoryNotFoundException;
 import be.technifutur.erp_finalproject.repositories.CategoryRepository;
 import be.technifutur.erp_finalproject.repositories.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public Category findById(Long id) {
         return categoryRepository.findById(id).orElseThrow(
-                () -> new CategoryNotFoundException(id));
+                () -> new NotFoundException(Entities.CATEGORY, id));
     }
 
     @Override
@@ -44,7 +45,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public Category update(Long id, Category category) {
         Category exitsingCategory = categoryRepository.findById(id).orElseThrow(
-                () -> new CategoryNotFoundException(id));
+                () -> new NotFoundException(Entities.CATEGORY, id));
         if (!exitsingCategory.getName().equals(category.getName())
                 && categoryRepository.existsByName(category.getName())) {
             throw new CategoryAlreadyExistsException(category.getName());
@@ -58,7 +59,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public void delete(Long id) {
         if (!categoryRepository.existsById(id)) {
-            throw new CategoryNotFoundException(id);
+            throw new NotFoundException(Entities.CATEGORY, id);
         }
         if (productRepository.existsByCategoryId(id)) {
             throw new CategoryNotEmptyException(id);

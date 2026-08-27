@@ -10,7 +10,7 @@ public record UserResponse(
         UserRole role,
         boolean archived
 ) {
-    public static UserResponse fromUser(User user) {
+    public static UserResponse from(User user) {
         return new UserResponse(
                 user.getId(),
                 user.getEmail(),

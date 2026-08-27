@@ -38,7 +38,7 @@ public class UserController {
             @PageableDefault(size = 10) Pageable pageable
     ) {
         Page<UserResponse> page = userService.search(name, email, role, pageable)
-                .map(UserResponse::fromUser);
+                .map(UserResponse::from);
 
         return ResponseEntity.ok(new PagedModel<>(page));
     }
@@ -47,7 +47,7 @@ public class UserController {
     public ResponseEntity<UserResponse> findById(
             @PathVariable Long id
     ) {
-        UserResponse response = UserResponse.fromUser(userService.findById(id));
+        UserResponse response = UserResponse.from(userService.findById(id));
 
         return ResponseEntity.ok().body(response);
     }

@@ -12,7 +12,7 @@ public record StockMovementResponse(
         LocalDateTime date,
         String userName
 ) {
-    public static StockMovementResponse form(StockMovement stockMovement) {
+    public static StockMovementResponse from(StockMovement stockMovement) {
         return new StockMovementResponse(
                 stockMovement.getId(),
                 stockMovement.getType(),

@@ -45,7 +45,7 @@ public class QuoteController {
             @PathVariable Long id
     ) {
         QuoteResponse response = QuoteResponse
-                .fromQuoteResponse(quoteService.findById(id));
+                .from(quoteService.findById(id));
 
         return ResponseEntity.ok().body(response);
     }
@@ -71,7 +71,7 @@ public class QuoteController {
             @PathVariable Long id
     ) {
         QuoteResponse response = QuoteResponse
-                .fromQuoteResponse(quoteService.send(id));
+                .from(quoteService.send(id));
 
         return ResponseEntity.ok(response);
     }
@@ -82,7 +82,7 @@ public class QuoteController {
             @AuthenticationPrincipal JwtUtils.UserSession user
     ) {
         QuoteResponse response = QuoteResponse
-                .fromQuoteResponse(quoteService.accept(id, user.id()));
+                .from(quoteService.accept(id, user.id()));
 
         return ResponseEntity.ok(response);
     }
@@ -92,7 +92,7 @@ public class QuoteController {
             @PathVariable Long id
     ) {
         QuoteResponse response = QuoteResponse
-                .fromQuoteResponse(quoteService.refuse(id));
+                .from(quoteService.refuse(id));
 
         return ResponseEntity.ok(response);
     }
