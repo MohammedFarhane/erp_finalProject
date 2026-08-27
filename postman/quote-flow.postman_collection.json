@@ -1,0 +1,426 @@
+{
+  "info": {
+    "name": "ERP - Parcours Devis",
+    "description": "Cycle de vie complet d'un devis : creation, envoi, acceptation, facture generee. Plus les cas d'erreur.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "token", "value": "" },
+    { "key": "quoteId", "value": "" },
+    { "key": "billingId", "value": "" },
+    { "key": "brouillonId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "0. POST /auth/login - recuperer le jeton",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "",
+              "pm.test('jeton present', () => pm.expect(body.token).to.be.a('string'));",
+              "pm.test('role ADMIN', () => pm.expect(body.role).to.eql('ADMIN'));",
+              "pm.test('aucun mot de passe dans la reponse', () => {",
+              "  pm.expect(JSON.stringify(body)).to.not.include('password');",
+              "});",
+              "",
+              "pm.collectionVariables.set('token', body.token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@admin.be\",\n  \"password\": \"test123\"\n}"
+        }
+      }
+    },
+    {
+      "name": "1. POST /quote - creer un devis",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201 Created', () => pm.response.to.have.status(201));",
+              "",
+              "const location = pm.response.headers.get('Location');",
+              "pm.test('header Location present', () => pm.expect(location).to.be.a('string'));",
+              "",
+              "const id = location.split('/').pop();",
+              "pm.collectionVariables.set('quoteId', id);",
+              "console.log('quoteId =', id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/quote", "host": ["{{baseUrl}}"], "path": ["quote"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"clientId\": 1,\n  \"discount\": 10.00,\n  \"lines\": [\n    { \"productId\": 1, \"quantity\": 2 },\n    { \"productId\": 2, \"quantity\": 1 }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "2. GET /quote/{id} - etat BROUILLON, billingId null",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const q = pm.response.json();",
+              "",
+              "pm.test('etat BROUILLON', () => pm.expect(q.state).to.eql('BROUILLON'));",
+              "",
+              "// Le point sensible : sans le ternaire de garde, cet appel aurait leve un NPE",
+              "pm.test('billingId null tant que non accepte', () => pm.expect(q.billingId).to.be.null);",
+              "",
+              "pm.test('2 lignes', () => pm.expect(q.lines).to.have.lengthOf(2));",
+              "pm.test('nom du produit expose, pas l entite', () => pm.expect(q.lines[0].productName).to.be.a('string'));",
+              "",
+              "// 499.99*2 = 999.98 ; 449.99*1 = 449.99 ; sous-total 1449.97",
+              "pm.test('subTotal 1449.97', () => pm.expect(q.subTotal).to.eql(1449.97));",
+              "// TVA brute 304.50 remisee a 10% => 274.05 ; total 1449.97*0.9 + 274.05",
+              "pm.test('totalPrice 1579.02', () => pm.expect(q.totalPrice).to.eql(1579.02));",
+              "",
+              "pm.test('expiration a 30 jours', () => {",
+              "  const d = new Date(q.quoteDate), e = new Date(q.expirationDate);",
+              "  pm.expect(Math.round((e - d) / 86400000)).to.eql(30);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/quote/{{quoteId}}", "host": ["{{baseUrl}}"], "path": ["quote", "{{quoteId}}"] }
+      }
+    },
+    {
+      "name": "3. POST /quote/{id}/send - BROUILLON vers ENVOYE",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('etat ENVOYE', () => pm.expect(pm.response.json().state).to.eql('ENVOYE'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/quote/{{quoteId}}/send", "host": ["{{baseUrl}}"], "path": ["quote", "{{quoteId}}", "send"] }
+      }
+    },
+    {
+      "name": "4. POST /quote/{id}/send - deja envoye => 409",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('409 Conflict', () => pm.response.to.have.status(409));",
+              "pm.test('ProblemDetail RFC 9457', () => {",
+              "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+              "  pm.expect(pm.response.json()).to.have.property('detail');",
+              "});",
+              "console.log(pm.response.json().detail);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/quote/{{quoteId}}/send", "host": ["{{baseUrl}}"], "path": ["quote", "{{quoteId}}", "send"] }
+      }
+    },
+    {
+      "name": "5. POST /quote/{id}/accept - facture generee",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const q = pm.response.json();",
+              "",
+              "pm.test('etat ACCEPTE', () => pm.expect(q.state).to.eql('ACCEPTE'));",
+              "pm.test('billingId renseigne', () => pm.expect(q.billingId).to.be.a('number'));",
+              "",
+              "pm.collectionVariables.set('billingId', q.billingId);",
+              "console.log('billingId =', q.billingId);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/quote/{{quoteId}}/accept",
+          "host": ["{{baseUrl}}"],
+          "path": ["quote", "{{quoteId}}", "accept"]
+        }
+      }
+    },
+    {
+      "name": "6. GET /billing/{id} - montants figes du devis",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const b = pm.response.json();",
+              "",
+              "pm.test('facture en BROUILLON', () => pm.expect(b.state).to.eql('BROUILLON'));",
+              "pm.test('reference FAC', () => pm.expect(b.reference).to.match(/^FAC-\\d{4}-\\d{5}$/));",
+              "",
+              "// createFromQuote recopie les montants sans recalculer",
+              "pm.test('totalPrice identique au devis', () => pm.expect(b.totalPrice).to.eql(1579.02));",
+              "pm.test('subTotal identique au devis', () => pm.expect(b.subTotal).to.eql(1449.97));",
+              "pm.test('2 lignes recopiees', () => pm.expect(b.lines).to.have.lengthOf(2));",
+              "",
+              "pm.test('rien paye', () => pm.expect(b.paidAmount).to.eql(0));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/billing/{{billingId}}", "host": ["{{baseUrl}}"], "path": ["billing", "{{billingId}}"] }
+      }
+    },
+    {
+      "name": "7. GET /quote - recherche paginee",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const p = pm.response.json();",
+              "pm.test('PagedModel', () => pm.expect(p).to.have.property('page'));",
+              "pm.test('au moins un resultat ACCEPTE', () => {",
+              "  pm.expect(p.content.length).to.be.above(0);",
+              "  pm.expect(p.content[0].state).to.eql('ACCEPTE');",
+              "});",
+              "pm.test('resume sans lignes', () => pm.expect(p.content[0]).to.not.have.property('lines'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/quote?state=ACCEPTE&clientName=dupont&page=0&size=10",
+          "host": ["{{baseUrl}}"],
+          "path": ["quote"],
+          "query": [
+            { "key": "state", "value": "ACCEPTE" },
+            { "key": "clientName", "value": "dupont" },
+            { "key": "page", "value": "0" },
+            { "key": "size", "value": "10" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "8. POST /quote - remise 150 => 400",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+              "pm.test('@DecimalMax rejette la remise', () => {",
+              "  pm.expect(JSON.stringify(pm.response.json())).to.include('discount');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/quote", "host": ["{{baseUrl}}"], "path": ["quote"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"clientId\": 1,\n  \"discount\": 150.00,\n  \"lines\": [\n    { \"productId\": 1, \"quantity\": 1 }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "9. POST /quote - sans ligne => 400",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+              "pm.test('@NotEmpty rejette la liste vide', () => {",
+              "  pm.expect(JSON.stringify(pm.response.json())).to.include('lines');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/quote", "host": ["{{baseUrl}}"], "path": ["quote"] },
+        "body": { "mode": "raw", "raw": "{\n  \"clientId\": 1,\n  \"discount\": 10.00,\n  \"lines\": []\n}" }
+      }
+    },
+    {
+      "name": "10. POST /quote - quantite 0 => 400",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+              "// Si ce test echoue avec un 201, c est que @Valid manque sur la liste :",
+              "// la validation ne descend pas dans les elements imbriques sans lui.",
+              "pm.test('@Valid descend dans les lignes', () => {",
+              "  pm.expect(JSON.stringify(pm.response.json())).to.include('quantity');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/quote", "host": ["{{baseUrl}}"], "path": ["quote"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"clientId\": 1,\n  \"discount\": 10.00,\n  \"lines\": [\n    { \"productId\": 1, \"quantity\": 0 }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "11. POST /quote - creer un 2e devis (reste BROUILLON)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201 Created', () => pm.response.to.have.status(201));",
+              "const id = pm.response.headers.get('Location').split('/').pop();",
+              "pm.collectionVariables.set('brouillonId', id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/quote", "host": ["{{baseUrl}}"], "path": ["quote"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"clientId\": 2,\n  \"discount\": null,\n  \"lines\": [\n    { \"productId\": 5, \"quantity\": 3 }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "12. POST /quote/{brouillon}/accept - pas envoye => 409",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('409 Conflict', () => pm.response.to.have.status(409));",
+              "console.log(pm.response.json().detail);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/quote/{{brouillonId}}/accept",
+          "host": ["{{baseUrl}}"],
+          "path": ["quote", "{{brouillonId}}", "accept"]
+        }
+      }
+    },
+    {
+      "name": "13. POST /quote/{brouillon}/refuse - pas envoye => 409",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('409 Conflict', () => pm.response.to.have.status(409));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/quote/{{brouillonId}}/refuse", "host": ["{{baseUrl}}"], "path": ["quote", "{{brouillonId}}", "refuse"] }
+      }
+    },
+    {
+      "name": "14. GET /quote/999999 - inexistant => 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('404 Not Found', () => pm.response.to.have.status(404));",
+              "pm.test('ProblemDetail', () => pm.expect(pm.response.json()).to.have.property('detail'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/quote/999999", "host": ["{{baseUrl}}"], "path": ["quote", "999999"] }
+      }
+    }
+  ]
+}

@@ -1,0 +1,550 @@
+{
+  "info": {
+    "name": "ERP - Utilisateurs",
+    "description": "Gestion des comptes par l'administrateur : creation, modification, archivage, changement de mot de passe, et la regle du dernier administrateur.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "adminToken", "value": "" },
+    { "key": "employeeToken", "value": "" },
+    { "key": "admin2Token", "value": "" },
+    { "key": "admin2Id", "value": "" },
+    { "key": "messageLoginRate", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Login ADMIN",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.collectionVariables.set('adminToken', pm.response.json().token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@admin.be\",\n  \"password\": \"test123\"\n}" }
+      }
+    },
+    {
+      "name": "2. Login EMPLOYEE",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.collectionVariables.set('employeeToken', pm.response.json().token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"employee@employee.be\",\n  \"password\": \"test123\"\n}" }
+      }
+    },
+    {
+      "name": "3. GET /user avec EMPLOYEE => 403",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// @PreAuthorize sur la CLASSE : meme la lecture est reservee a l'admin",
+              "pm.test('403 Forbidden', () => pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{employeeToken}}" }],
+        "url": { "raw": "{{baseUrl}}/user", "host": ["{{baseUrl}}"], "path": ["user"] }
+      }
+    },
+    {
+      "name": "4. GET /user avec ADMIN => 200, aucun mot de passe",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const p = pm.response.json();",
+              "pm.test('2 utilisateurs', () => pm.expect(p.content.length).to.eql(2));",
+              "",
+              "// UserResponse ne doit jamais exposer le mot de passe, meme hache",
+              "pm.test('aucun mot de passe dans la reponse', () => {",
+              "  pm.expect(JSON.stringify(p)).to.not.include('password');",
+              "  pm.expect(JSON.stringify(p)).to.not.include('$2a$');",
+              "});",
+              "pm.test('role et archived exposes', () => {",
+              "  pm.expect(p.content[0].role).to.be.a('string');",
+              "  pm.expect(p.content[0].archived).to.eql(false);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+        "url": { "raw": "{{baseUrl}}/user", "host": ["{{baseUrl}}"], "path": ["user"] }
+      }
+    },
+    {
+      "name": "5. POST /user avec EMPLOYEE => 403",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": ["pm.test('403 Forbidden', () => pm.response.to.have.status(403));"]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{employeeToken}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/user", "host": ["{{baseUrl}}"], "path": ["user"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Intrus\",\n  \"email\": \"intrus@test.be\",\n  \"password\": \"motdepasse123\",\n  \"role\": \"ADMIN\"\n}"
+        }
+      }
+    },
+    {
+      "name": "6. POST /user avec ADMIN => 201 (2e admin)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201 Created', () => pm.response.to.have.status(201));",
+              "",
+              "const location = pm.response.headers.get('Location');",
+              "pm.test('Location present', () => pm.expect(location).to.be.a('string'));",
+              "// Location doit pointer sur /user/{id}, pas sur /user/create/{id}",
+              "pm.test('Location bien forme', () => pm.expect(location).to.match(/\\/user\\/\\d+$/));",
+              "",
+              "pm.collectionVariables.set('admin2Id', location.split('/').pop());"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/user", "host": ["{{baseUrl}}"], "path": ["user"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Second Admin\",\n  \"email\": \"admin2@admin.be\",\n  \"password\": \"motdepasse123\",\n  \"role\": \"ADMIN\"\n}"
+        }
+      }
+    },
+    {
+      "name": "7. POST /user email deja pris => 409",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// existsByEmail + UserAlreadyExistException (ConflictException)",
+              "pm.test('409 Conflict et non 404', () => pm.response.to.have.status(409));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/user", "host": ["{{baseUrl}}"], "path": ["user"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Doublon\",\n  \"email\": \"admin2@admin.be\",\n  \"password\": \"motdepasse123\",\n  \"role\": \"EMPLOYEE\"\n}"
+        }
+      }
+    },
+    {
+      "name": "8. POST /user mot de passe trop court => 400",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+              "pm.test('@Size(min=8) rejette', () => {",
+              "  pm.expect(JSON.stringify(pm.response.json())).to.include('password');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/user", "host": ["{{baseUrl}}"], "path": ["user"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Court\",\n  \"email\": \"court@test.be\",\n  \"password\": \"abc\",\n  \"role\": \"EMPLOYEE\"\n}"
+        }
+      }
+    },
+    {
+      "name": "9. POST /user email malforme => 400",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+              "pm.test('@Email rejette', () => {",
+              "  pm.expect(JSON.stringify(pm.response.json())).to.include('email');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/user", "host": ["{{baseUrl}}"], "path": ["user"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Mauvais mail\",\n  \"email\": \"pas-un-email\",\n  \"password\": \"motdepasse123\",\n  \"role\": \"EMPLOYEE\"\n}"
+        }
+      }
+    },
+    {
+      "name": "10. Login du compte cree => le hachage fonctionne",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Si create avait stocke le mot de passe en clair, matches() renverrait false ici.",
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('role ADMIN', () => pm.expect(pm.response.json().role).to.eql('ADMIN'));",
+              "pm.collectionVariables.set('admin2Token', pm.response.json().token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin2@admin.be\",\n  \"password\": \"motdepasse123\"\n}" }
+      }
+    },
+    {
+      "name": "11. change-password sans jeton => 401",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": ["pm.test('401 Unauthorized', () => pm.response.to.have.status(401));"]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/user/change-password", "host": ["{{baseUrl}}"], "path": ["user", "change-password"] },
+        "body": { "mode": "raw", "raw": "{\n  \"oldPassword\": \"motdepasse123\",\n  \"newPassword\": \"nouveaumotdepasse\"\n}" }
+      }
+    },
+    {
+      "name": "12. change-password ancien mot de passe faux => 401",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": ["pm.test('401 Unauthorized', () => pm.response.to.have.status(401));"]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{admin2Token}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/user/change-password", "host": ["{{baseUrl}}"], "path": ["user", "change-password"] },
+        "body": { "mode": "raw", "raw": "{\n  \"oldPassword\": \"paslebon123\",\n  \"newPassword\": \"nouveaumotdepasse\"\n}" }
+      }
+    },
+    {
+      "name": "13. change-password avec EMPLOYEE => autorise",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// @PreAuthorize(\"isAuthenticated()\") surcharge la regle ADMIN de la classe.",
+              "// L'ancien mot de passe est faux, donc 401 - mais surtout PAS 403.",
+              "pm.test('pas 403 : un employe peut changer son mot de passe', () => {",
+              "  pm.expect(pm.response.code).to.not.eql(403);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{employeeToken}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/user/change-password", "host": ["{{baseUrl}}"], "path": ["user", "change-password"] },
+        "body": { "mode": "raw", "raw": "{\n  \"oldPassword\": \"pasbon12345\",\n  \"newPassword\": \"nouveaumotdepasse\"\n}" }
+      }
+    },
+    {
+      "name": "14. change-password valide => 204",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{admin2Token}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/user/change-password", "host": ["{{baseUrl}}"], "path": ["user", "change-password"] },
+        "body": { "mode": "raw", "raw": "{\n  \"oldPassword\": \"motdepasse123\",\n  \"newPassword\": \"nouveaumotdepasse\"\n}" }
+      }
+    },
+    {
+      "name": "15. Login avec le NOUVEAU mot de passe => 200",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.collectionVariables.set('admin2Token', pm.response.json().token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin2@admin.be\",\n  \"password\": \"nouveaumotdepasse\"\n}" }
+      }
+    },
+    {
+      "name": "16. Login avec l'ANCIEN mot de passe => 401",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));",
+              "// On garde le message pour le comparer a celui du compte archive",
+              "pm.collectionVariables.set('messageLoginRate', pm.response.json().detail);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin2@admin.be\",\n  \"password\": \"motdepasse123\"\n}" }
+      }
+    },
+    {
+      "name": "17. PUT /user/{id} modifier le nom => 204",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Le role reste ADMIN : checkNotLastAdmin ne doit pas se declencher",
+              "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/user/{{admin2Id}}", "host": ["{{baseUrl}}"], "path": ["user", "{{admin2Id}}"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Second Admin renomme\",\n  \"email\": \"admin2@admin.be\",\n  \"role\": \"ADMIN\"\n}"
+        }
+      }
+    },
+    {
+      "name": "18. DELETE /user/{id} archiver le 2e admin => 204",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Il reste 2 admins actifs : l'archivage est autorise",
+              "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+        "url": { "raw": "{{baseUrl}}/user/{{admin2Id}}", "host": ["{{baseUrl}}"], "path": ["user", "{{admin2Id}}"] }
+      }
+    },
+    {
+      "name": "19. Login du compte archive => 401, MEME message",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));",
+              "",
+              "// findByEmailAndArchivedFalse + InvalidCredentialsException :",
+              "// un compte desactive ne doit pas se distinguer d'un mot de passe faux.",
+              "pm.test('message identique a un login rate', () => {",
+              "  pm.expect(pm.response.json().detail).to.eql(pm.collectionVariables.get('messageLoginRate'));",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin2@admin.be\",\n  \"password\": \"nouveaumotdepasse\"\n}" }
+      }
+    },
+    {
+      "name": "20. DELETE du DERNIER admin => 409",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// admin2 est archive : admin@admin.be est le dernier admin actif.",
+              "// checkNotLastAdmin doit refuser.",
+              "pm.test('409 Conflict', () => pm.response.to.have.status(409));",
+              "console.log(pm.response.json().detail);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+        "url": { "raw": "{{baseUrl}}/user/1", "host": ["{{baseUrl}}"], "path": ["user", "1"] }
+      }
+    },
+    {
+      "name": "21. Retrograder le DERNIER admin => 409",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Le second point d'application de la regle : passer le dernier admin",
+              "// en EMPLOYEE revient au meme que l'archiver.",
+              "pm.test('409 Conflict', () => pm.response.to.have.status(409));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/user/1", "host": ["{{baseUrl}}"], "path": ["user", "1"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Admin\",\n  \"email\": \"admin@admin.be\",\n  \"role\": \"EMPLOYEE\"\n}"
+        }
+      }
+    },
+    {
+      "name": "22. GET /user/999999 => 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('404 Not Found', () => pm.response.to.have.status(404));",
+              "pm.test('ProblemDetail', () => pm.expect(pm.response.json()).to.have.property('detail'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+        "url": { "raw": "{{baseUrl}}/user/999999", "host": ["{{baseUrl}}"], "path": ["user", "999999"] }
+      }
+    }
+  ]
+}

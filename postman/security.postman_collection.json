@@ -1,0 +1,386 @@
+{
+  "info": {
+    "name": "ERP - Securite",
+    "description": "Authentification JWT et regles d'acces. Verifie que le catalogue est reserve a ADMIN et que le reste est ouvert a tout utilisateur authentifie.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "adminToken", "value": "" },
+    { "key": "employeeToken", "value": "" },
+    { "key": "messageMauvaisMdp", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Login ADMIN",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const b = pm.response.json();",
+              "",
+              "pm.test('jeton present', () => pm.expect(b.token).to.be.a('string'));",
+              "pm.test('role ADMIN', () => pm.expect(b.role).to.eql('ADMIN'));",
+              "pm.test('pas de mot de passe dans la reponse', () => {",
+              "  pm.expect(JSON.stringify(b)).to.not.include('password');",
+              "});",
+              "",
+              "// Un JWT est signe, pas chiffre : n'importe qui peut lire la charge utile.",
+              "const payload = JSON.parse(atob(b.token.split('.')[1]));",
+              "pm.test('claim sub = email', () => pm.expect(payload.sub).to.eql('admin@admin.be'));",
+              "pm.test('claim id present', () => pm.expect(payload.id).to.be.a('number'));",
+              "pm.test('claim ROLE = [ROLE_ADMIN]', () => pm.expect(payload.ROLE).to.eql(['ROLE_ADMIN']));",
+              "pm.test('exp posterieur a iat', () => pm.expect(payload.exp).to.be.above(payload.iat));",
+              "console.log('validite (s) =', payload.exp - payload.iat);",
+              "",
+              "pm.collectionVariables.set('adminToken', b.token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@admin.be\",\n  \"password\": \"test123\"\n}" }
+      }
+    },
+    {
+      "name": "2. Login EMPLOYEE",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const b = pm.response.json();",
+              "pm.test('role EMPLOYEE', () => pm.expect(b.role).to.eql('EMPLOYEE'));",
+              "",
+              "const payload = JSON.parse(atob(b.token.split('.')[1]));",
+              "pm.test('claim ROLE = [ROLE_EMPLOYEE]', () => pm.expect(payload.ROLE).to.eql(['ROLE_EMPLOYEE']));",
+              "",
+              "pm.collectionVariables.set('employeeToken', b.token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"employee@employee.be\",\n  \"password\": \"test123\"\n}" }
+      }
+    },
+    {
+      "name": "3. Login mauvais mot de passe => 401",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));",
+              "const detail = pm.response.json().detail;",
+              "pm.test('ProblemDetail avec detail', () => pm.expect(detail).to.be.a('string'));",
+              "pm.collectionVariables.set('messageMauvaisMdp', detail);",
+              "console.log('message =', detail);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@admin.be\",\n  \"password\": \"mauvais\"\n}" }
+      }
+    },
+    {
+      "name": "4. Login email inconnu => 401 IDENTIQUE",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));",
+              "",
+              "// Le test central : si les deux messages different, un attaquant enumere les comptes.",
+              "pm.test('message identique a celui du mauvais mot de passe', () => {",
+              "  pm.expect(pm.response.json().detail).to.eql(pm.collectionVariables.get('messageMauvaisMdp'));",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"personne@nulle-part.be\",\n  \"password\": \"test123\"\n}" }
+      }
+    },
+    {
+      "name": "5. Login email malforme => 400",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+              "pm.test('@Email rejette avant d atteindre le service', () => {",
+              "  pm.expect(JSON.stringify(pm.response.json())).to.include('email');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"pas-un-email\",\n  \"password\": \"test123\"\n}" }
+      }
+    },
+    {
+      "name": "6. GET /product SANS jeton => 401",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// anyRequest().authenticated() : le filet de la chaine",
+              "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/product", "host": ["{{baseUrl}}"], "path": ["product"] }
+      }
+    },
+    {
+      "name": "7. GET /product avec jeton bidon => 401",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// isValid() attrape JwtException : sans try/catch ce serait un 500",
+              "pm.test('401 et non 500', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer pas.un.jeton" }],
+        "url": { "raw": "{{baseUrl}}/product", "host": ["{{baseUrl}}"], "path": ["product"] }
+      }
+    },
+    {
+      "name": "8. GET /product avec EMPLOYEE => 200",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const p = pm.response.json();",
+              "pm.test('des produits', () => pm.expect(p.content.length).to.be.above(0));",
+              "",
+              "// Decision du 25 aout : l'employe voit le prix d'achat, donc la marge.",
+              "pm.test('purchasePrice visible par un employe', () => {",
+              "  pm.expect(p.content[0].purchasePrice).to.not.be.undefined;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{employeeToken}}" }],
+        "url": { "raw": "{{baseUrl}}/product", "host": ["{{baseUrl}}"], "path": ["product"] }
+      }
+    },
+    {
+      "name": "9. POST /product avec EMPLOYEE => 403",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// @PreAuthorize sur ProductController.create",
+              "// 403 et non 401 : l'employe est authentifie, mais pas autorise.",
+              "pm.test('403 Forbidden', () => pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{employeeToken}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/product", "host": ["{{baseUrl}}"], "path": ["product"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Test employe\",\n  \"description\": \"Ne doit pas etre cree\",\n  \"purchasePrice\": 10.00,\n  \"sellingPrice\": 20.00,\n  \"tvaRate\": 0.21,\n  \"minStockQuantity\": 5,\n  \"categoryId\": 1\n}"
+        }
+      }
+    },
+    {
+      "name": "10. POST /product avec ADMIN => 201",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201 Created', () => pm.response.to.have.status(201));",
+              "pm.test('header Location', () => pm.expect(pm.response.headers.get('Location')).to.be.a('string'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/product", "host": ["{{baseUrl}}"], "path": ["product"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Test admin\",\n  \"description\": \"Cree par l administrateur\",\n  \"purchasePrice\": 10.00,\n  \"sellingPrice\": 20.00,\n  \"tvaRate\": 0.21,\n  \"minStockQuantity\": 5,\n  \"categoryId\": 1\n}"
+        }
+      }
+    },
+    {
+      "name": "11. POST /category avec EMPLOYEE => 403",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": ["pm.test('403 Forbidden', () => pm.response.to.have.status(403));"]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{employeeToken}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/category", "host": ["{{baseUrl}}"], "path": ["category"] },
+        "body": { "mode": "raw", "raw": "{\n  \"name\": \"Interdit\"\n}" }
+      }
+    },
+    {
+      "name": "12. POST /supplier avec EMPLOYEE => 403",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": ["pm.test('403 Forbidden', () => pm.response.to.have.status(403));"]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{employeeToken}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/supplier", "host": ["{{baseUrl}}"], "path": ["supplier"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Interdit SPRL\",\n  \"email\": \"interdit@test.be\",\n  \"phone\": \"042000000\",\n  \"address\": { \"street\": \"Rue Test\", \"number\": \"1\", \"postalCode\": \"4000\", \"locality\": \"Liege\" }\n}"
+        }
+      }
+    },
+    {
+      "name": "13. DELETE /product/1 avec EMPLOYEE => 403",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": ["pm.test('403 Forbidden', () => pm.response.to.have.status(403));"]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [{ "key": "Authorization", "value": "Bearer {{employeeToken}}" }],
+        "url": { "raw": "{{baseUrl}}/product/1", "host": ["{{baseUrl}}"], "path": ["product", "1"] }
+      }
+    },
+    {
+      "name": "14. GET /quote avec EMPLOYEE => ouvert",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Le commercial est ouvert a tous : ni 401 ni 403",
+              "pm.test('200 OK', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{employeeToken}}" }],
+        "url": { "raw": "{{baseUrl}}/quote", "host": ["{{baseUrl}}"], "path": ["quote"] }
+      }
+    },
+    {
+      "name": "15. POST /stock-movement avec EMPLOYEE => pas 403",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Decision du 25 aout : les mouvements manuels restent ouverts aux employes.",
+              "// On verifie seulement l'autorisation, pas le resultat metier.",
+              "pm.test('ni 401 ni 403', () => {",
+              "  pm.expect(pm.response.code).to.not.eql(401);",
+              "  pm.expect(pm.response.code).to.not.eql(403);",
+              "});",
+              "console.log('statut =', pm.response.code);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{employeeToken}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/stock-movement", "host": ["{{baseUrl}}"], "path": ["stock-movement"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"productId\": 1,\n  \"type\": \"AJUSTEMENT_POSITIF\",\n  \"quantity\": 1\n}"
+        }
+      }
+    }
+  ]
+}
