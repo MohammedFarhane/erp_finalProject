@@ -8,9 +8,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Entity
 @Table(name = "user_")
@@ -46,30 +44,11 @@ public class User implements UserDetails {
     @Setter
     private boolean archived;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "user_client",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "client_id")
-    )
-    @ToString.Exclude
-    @Setter
-    private Set<Client> clients = new HashSet<>();
-
     public User(String name, String email, String password, UserRole role) {
         this.name = name;
         this.email = email;
         this.password = password;
         this.role = role;
-    }
-
-    public User(Long id, String name, String email, String password, UserRole role, boolean archived) {
-        this.id = id;
-        this.name = name;
-        this.email = email;
-        this.password = password;
-        this.role = role;
-        this.archived = archived;
     }
 
     @Override
