@@ -22,3 +22,5 @@ erp:
   jwt:
     secret: ${JWT_SECRET}
     expiration: 3600
+  cors:
+    allowed-origins: http://localhost:4200
