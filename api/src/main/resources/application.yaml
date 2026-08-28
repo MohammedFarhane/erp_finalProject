@@ -1,11 +1,13 @@
 spring:
   application:
     name: ERP_FinalProject
-  datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-    driver-class-name: org.postgresql.Driver
+# La datasource est découverte depuis compose.yaml (spring-boot-docker-compose).
+# Pour viser une base externe : spring.docker.compose.enabled=false + spring.datasource.*
+#  datasource:
+#    url: ${DB_URL}
+#    username: ${DB_USERNAME}
+#    password: ${DB_PASSWORD}
+#    driver-class-name: org.postgresql.Driver
   jpa:
     open-in-view: false
     hibernate:

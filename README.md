@@ -14,7 +14,7 @@ L'accent a été mis sur la cohérence des données métier — stock et paiemen
 | Spring Boot | 4.1.0 |
 | Spring Security | 7.1 (JWT via jjwt 0.13) |
 | Hibernate | 7.4 |
-| PostgreSQL | 18 |
+| PostgreSQL | 18 (conteneur Docker) |
 | Migrations | Flyway |
 | PDF | Thymeleaf + Open HTML to PDF 1.1.83 |
 | Build | Maven multi-modules |
@@ -136,24 +136,26 @@ Deux garde-fous : impossible d'archiver ou de rétrograder le dernier administra
 
 ## Prérequis
 
-- JDK 25
-- PostgreSQL 18, avec une base créée au préalable
-- Maven (le wrapper `mvnw` est fourni)
+- Docker — suffit à lui seul pour lancer le projet
+- JDK 25 et Maven (wrapper `mvnw` fourni) — uniquement pour développer
+
+**Aucune installation de PostgreSQL n'est nécessaire.** La base tourne dans un conteneur décrit par `docker-compose.yaml`, que Spring démarre lui-même au lancement de l'application — puis attend qu'il soit prêt avant de continuer. Le port publié, la base, l'utilisateur et le mot de passe sont découverts depuis ce fichier : il n'y a aucune URL de connexion à configurer.
+
+Le conteneur publie sur le port **5433** pour ne pas entrer en conflit avec un PostgreSQL déjà installé sur la machine.
 
 ---
 
 ## Configuration
 
-Quatre variables d'environnement sont requises — l'application refuse de démarrer sans elles.
+**Une seule variable d'environnement est requise.** Copiez `.env.example` en `.env` et renseignez-la :
 
 | Variable | Exemple |
 |---|---|
-| `DB_URL` | `jdbc:postgresql://localhost:5432/erp_final_project` |
-| `DB_USERNAME` | `postgres` |
-| `DB_PASSWORD` | `votre_mot_de_passe` |
 | `JWT_SECRET` | `remplacez-moi-par-32-octets-aleatoires-minimum` |
 
-**`JWT_SECRET` doit faire au moins 32 octets** (contrainte de HmacSHA256) et ne jamais être versionné. Pour en générer un :
+Docker Compose lit ce fichier automatiquement. Pour un lancement depuis l'IDE, définissez plutôt la variable dans la configuration d'exécution.
+
+Elle **doit faire au moins 32 octets** (contrainte de HmacSHA256) et ne jamais être versionnée. Pour en générer une :
 
 ```powershell
 $rng = New-Object System.Security.Cryptography.RNGCryptoServiceProvider
@@ -172,16 +174,40 @@ Sous IntelliJ : `Run` → `Edit Configurations…` → `Environment variables`.
 
 ## Lancement
 
+Deux modes, au choix.
+
+### Tout en conteneurs
+
+```bash
+docker compose --profile full up --build
+```
+
+Base **et** API démarrent ensemble : ni Java ni Maven ne sont nécessaires, seulement Docker. C'est le mode le plus simple pour découvrir le projet.
+
+### En local, base en conteneur
+
 ```bash
 ./mvnw clean install
 ./mvnw -pl api spring-boot:run
 ```
 
-L'API écoute sur `http://localhost:8080`.
+L'application tourne sur la machine, Spring démarre le conteneur PostgreSQL tout seul et attend qu'il soit prêt. C'est le mode de développement : le redémarrage prend quelques secondes au lieu de reconstruire une image.
+
+Le service `api` porte un profil Docker Compose, ce qui l'empêche de démarrer dans ce second mode — sans quoi deux instances se disputeraient le port 8080. Pour la même raison, les deux modes ne se lancent pas simultanément.
+
+Dans les deux cas, l'API écoute sur `http://localhost:8080`.
 
 Le schéma est géré par **Flyway** : au premier démarrage sur une base vide, la migration `V1__init_schema.sql` crée les tables, puis Hibernate — en `ddl-auto: validate` — vérifie qu'elles correspondent aux entités et refuse de démarrer sinon. Les migrations suivantes se déposent dans `api/src/main/resources/db/migration/`.
 
-Toujours au premier démarrage, un jeu de données est inséré : cinq catégories, neuf produits, cinq fournisseurs, deux clients, deux utilisateurs et les coordonnées de l'entreprise. Les lancements suivants n'y touchent plus — **les données sont conservées**.
+Toujours au premier démarrage, un jeu de données est inséré : cinq catégories, neuf produits, cinq fournisseurs, deux clients, deux utilisateurs et les coordonnées de l'entreprise. Les lancements suivants n'y touchent plus — **les données sont conservées** dans un volume Docker nommé, qui survit à l'arrêt des conteneurs.
+
+Pour repartir d'une base entièrement vierge :
+
+```bash
+docker compose down -v
+```
+
+Le `-v` supprime le volume ; Flyway et le jeu de données seront rejoués au démarrage suivant.
 
 ### Comptes de démonstration
 
@@ -204,7 +230,7 @@ Trois collections Postman dans `postman/`, 52 requêtes avec assertions :
 | `security` | Authentification JWT et matrice d'autorisation |
 | `user` | Gestion des comptes, changement de mot de passe, règle du dernier administrateur |
 
-Importer dans Postman, puis `Run collection`. Les collections partent du principe que les identifiants sont ceux du jeu de données initial — pour les rejouer à l'identique, repartir d'une base vide (`DROP SCHEMA public CASCADE; CREATE SCHEMA public;`), Flyway et l'`Initializer` la reconstruiront au démarrage suivant.
+Importer dans Postman, puis `Run collection`. Les collections partent du principe que les identifiants sont ceux du jeu de données initial — pour les rejouer à l'identique, repartir d'une base vierge avec `docker compose down -v`, Flyway et l'`Initializer` la reconstruiront au démarrage suivant.
 
 ---
 

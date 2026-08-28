@@ -1,0 +1,37 @@
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-erp_final_project}
+      POSTGRES_USER: ${POSTGRES_USER:-erp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-erp}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-erp} -d ${POSTGRES_DB:-erp_final_project}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+  api:
+    profiles: [ "full" ]
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-erp_final_project}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-erp}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-erp}
+      SPRING_DOCKER_COMPOSE_ENABLED: "false"
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+volumes:
+      postgres-data:
+
