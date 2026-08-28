@@ -15,6 +15,7 @@ L'accent a été mis sur la cohérence des données métier — stock et paiemen
 | Spring Security | 7.1 (JWT via jjwt 0.13) |
 | Hibernate | 7.4 |
 | PostgreSQL | 18 |
+| Migrations | Flyway |
 | PDF | Thymeleaf + Open HTML to PDF 1.1.83 |
 | Build | Maven multi-modules |
 
@@ -178,9 +179,9 @@ Sous IntelliJ : `Run` → `Edit Configurations…` → `Environment variables`.
 
 L'API écoute sur `http://localhost:8080`.
 
-> **Attention** — le schéma est en `ddl-auto: create` : la base est **recréée à chaque démarrage**. C'est un choix de développement ; un passage à Flyway est prévu.
+Le schéma est géré par **Flyway** : au premier démarrage sur une base vide, la migration `V1__init_schema.sql` crée les tables, puis Hibernate — en `ddl-auto: validate` — vérifie qu'elles correspondent aux entités et refuse de démarrer sinon. Les migrations suivantes se déposent dans `api/src/main/resources/db/migration/`.
 
-Au premier lancement, un jeu de données est inséré : cinq catégories, neuf produits, cinq fournisseurs, deux clients et deux utilisateurs.
+Toujours au premier démarrage, un jeu de données est inséré : cinq catégories, neuf produits, cinq fournisseurs, deux clients, deux utilisateurs et les coordonnées de l'entreprise. Les lancements suivants n'y touchent plus — **les données sont conservées**.
 
 ### Comptes de démonstration
 
@@ -189,7 +190,7 @@ Au premier lancement, un jeu de données est inséré : cinq catégories, neuf p
 | `admin@admin.be` | `test123` | `ADMIN` |
 | `employee@employee.be` | `test123` | `EMPLOYEE` |
 
-Comptes de développement, recréés à chaque démarrage.
+Comptes de développement, insérés au premier démarrage.
 
 ---
 
@@ -203,7 +204,7 @@ Trois collections Postman dans `postman/`, 52 requêtes avec assertions :
 | `security` | Authentification JWT et matrice d'autorisation |
 | `user` | Gestion des comptes, changement de mot de passe, règle du dernier administrateur |
 
-Importer dans Postman, puis `Run collection`. **Redémarrer l'application avant chaque passage** : la base étant recréée, les identifiants repartent de 1.
+Importer dans Postman, puis `Run collection`. Les collections partent du principe que les identifiants sont ceux du jeu de données initial — pour les rejouer à l'identique, repartir d'une base vide (`DROP SCHEMA public CASCADE; CREATE SCHEMA public;`), Flyway et l'`Initializer` la reconstruiront au démarrage suivant.
 
 ---
 
